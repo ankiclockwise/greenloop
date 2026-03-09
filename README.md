@@ -1,6 +1,7 @@
 # Greenloop
 
 Overview
+
 Food waste is one of the most overlooked drivers of climate change, responsible for approximately 8 to 10% of global greenhouse gas emissions. When food is discarded, it carries the full carbon cost of everything that went into producing, transporting, and storing it, along with additional methane emissions released as it decomposes in landfills. This problem is especially visible in university settings, where dining halls overproduce daily, grocery stores regularly discard near-expiry items that are still perfectly edible, and students throw away food they simply did not get around to finishing.
 GreenLoop is a web-based food rescue platform built to connect surplus food with people who can use it before it goes to waste. It serves four groups: grocery stores with near-expiry inventory, university dining halls with end-of-day surplus, individual donors with extra food, and students or community members looking for affordable meals nearby. The platform aims to reduce food waste on and around college campuses, lower the associated carbon emissions, and improve food access for students on tight budgets. By serving the Five College community across UMass Amherst and neighboring institutions, GreenLoop creates a shared sustainability platform where every rescued meal is tracked as a real reduction in CO2 emissions, making environmental impact visible and meaningful for everyone involved.
 
