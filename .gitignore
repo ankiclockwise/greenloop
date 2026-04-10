@@ -1,0 +1,20 @@
+# frontend
+frontend/node_modules/
+frontend/dist/
+
+# backend
+backend/target/
+
+# env
+.env
+.env.local
+frontend/.env
+backend/.env
+
+# firebase secrets
+firebase/service-account.json
+
+# system
+.DS_Store
+.idea/
+.vscode/
