@@ -1,0 +1,2401 @@
+openapi: 3.1.0
+info:
+  title: GreenLoop Food Rescue API
+  description: |
+    Comprehensive API for the GreenLoop food rescue application.
+    CS 520 Spring 2026, Team 12.
+
+    The GreenLoop platform connects food retailers, dining halls, and donors with consumers
+    to rescue surplus food, reduce waste, and build community. Users can be Consumers,
+    Retailers, DiningHalls, or Donors.
+  version: 1.0.0
+  contact:
+    name: GreenLoop Support
+    email: support@greenloop.app
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.greenloop.app/v1
+    description: Production server
+  - url: https://staging-api.greenloop.app/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and OAuth
+  - name: Users
+    description: User profile and dashboard management
+  - name: Listings
+    description: Food item listings and management
+  - name: Reservations
+    description: Food item reservations and pickups
+  - name: Notifications
+    description: Real-time notifications and subscription management
+  - name: Carbon
+    description: Carbon impact tracking and leaderboards
+  - name: Analytics
+    description: Retailer and dining hall analytics
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token obtained from /auth/login or /auth/refresh.
+        Include in Authorization header: "Authorization: Bearer <token>"
+
+  schemas:
+    # User-related schemas
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "Jane Doe"
+        role:
+          type: string
+          enum: [Consumer, Retailer, DiningHall, Donor]
+          example: "Consumer"
+        universityEmail:
+          type: string
+          format: email
+          example: "jdoe@university.edu"
+        profileImage:
+          type: string
+          format: uri
+          example: "https://cdn.greenloop.app/profiles/550e8400.jpg"
+        bio:
+          type: string
+          example: "Passionate about reducing food waste"
+        address:
+          $ref: "#/components/schemas/Address"
+        phone:
+          type: string
+          format: phone
+          example: "+1-555-123-4567"
+        emailVerified:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T14:22:15Z"
+        statistics:
+          $ref: "#/components/schemas/UserStatistics"
+
+    UserStatistics:
+      type: object
+      properties:
+        itemsPosted:
+          type: integer
+          example: 12
+        itemsReserved:
+          type: integer
+          example: 8
+        itemsCollected:
+          type: integer
+          example: 7
+        totalCO2Saved:
+          type: number
+          format: double
+          example: 45.5
+        rating:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 5
+          example: 4.8
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: "123 Main Street"
+        city:
+          type: string
+          example: "San Francisco"
+        state:
+          type: string
+          example: "CA"
+        zipCode:
+          type: string
+          example: "94102"
+        latitude:
+          type: number
+          format: double
+          example: 37.7749
+        longitude:
+          type: number
+          format: double
+          example: -122.4194
+
+    # Authentication schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          example: "newuser@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "SecurePass123!"
+        role:
+          type: string
+          enum: [Consumer, Retailer, DiningHall, Donor]
+          example: "Consumer"
+        universityEmail:
+          type: string
+          format: email
+          example: "student@university.edu"
+        name:
+          type: string
+          example: "John Smith"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "SecurePass123!"
+
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - role
+        - user
+      properties:
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        role:
+          type: string
+          enum: [Consumer, Retailer, DiningHall, Donor]
+          example: "Consumer"
+        user:
+          $ref: "#/components/schemas/User"
+        expiresIn:
+          type: integer
+          description: Access token expiration in seconds
+          example: 3600
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Email verification token from email link
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    # Listing schemas
+    Listing:
+      type: object
+      required:
+        - id
+        - owner
+        - title
+        - description
+        - quantity
+        - status
+        - expiresAt
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        owner:
+          type: object
+          required:
+            - id
+            - name
+            - role
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            name:
+              type: string
+              example: "Fresh Market Co."
+            role:
+              type: string
+              enum: [Retailer, DiningHall, Donor]
+              example: "Retailer"
+            rating:
+              type: number
+              format: double
+              example: 4.7
+        title:
+          type: string
+          example: "Fresh Organic Salad Mix"
+        description:
+          type: string
+          example: "Unopened packages of mixed organic greens. Best by 2026-04-11."
+        category:
+          type: string
+          enum: [Produce, Dairy, Bakery, Prepared, Beverage, Pantry, Frozen, Other]
+          example: "Produce"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://cdn.greenloop.app/listings/660e8400.jpg"
+        quantity:
+          type: integer
+          minimum: 1
+          example: 5
+        unit:
+          type: string
+          enum: [item, pound, kilogram, liter, gallon, dozen, box, package]
+          example: "package"
+        originalPrice:
+          type: number
+          format: double
+          minimum: 0
+          example: 15.99
+        discountedPrice:
+          type: number
+          format: double
+          minimum: 0
+          example: 4.99
+        dietaryInfo:
+          type: array
+          items:
+            type: string
+            enum: [vegan, vegetarian, glutenFree, dairyFree, nutFree]
+          example: ["vegan", "glutenFree"]
+        allergens:
+          type: array
+          items:
+            type: string
+          example: ["peanuts", "tree nuts"]
+        pickupLocation:
+          $ref: "#/components/schemas/Address"
+        pickupSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/PickupSlot"
+          example:
+            - start: "2026-04-09T17:00:00Z"
+              end: "2026-04-09T18:00:00Z"
+              reserved: false
+        status:
+          type: string
+          enum: [Available, Reserved, Collected, Expired, Cancelled]
+          example: "Available"
+        reservationCount:
+          type: integer
+          example: 2
+        co2SavedKg:
+          type: number
+          format: double
+          description: Estimated CO2 saved if item is rescued
+          example: 2.5
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T10:15:00Z"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2026-04-11T23:59:59Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T14:30:00Z"
+
+    CreateListingRequest:
+      type: object
+      required:
+        - title
+        - description
+        - category
+        - quantity
+        - unit
+        - expiresAt
+        - pickupSlots
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Fresh Organic Salad Mix"
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          example: "Unopened packages of mixed organic greens. Best by 2026-04-11."
+        category:
+          type: string
+          enum: [Produce, Dairy, Bakery, Prepared, Beverage, Pantry, Frozen, Other]
+          example: "Produce"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://cdn.greenloop.app/listings/new.jpg"
+        quantity:
+          type: integer
+          minimum: 1
+          example: 5
+        unit:
+          type: string
+          enum: [item, pound, kilogram, liter, gallon, dozen, box, package]
+          example: "package"
+        originalPrice:
+          type: number
+          format: double
+          minimum: 0
+          example: 15.99
+        discountedPrice:
+          type: number
+          format: double
+          minimum: 0
+          example: 4.99
+        dietaryInfo:
+          type: array
+          items:
+            type: string
+            enum: [vegan, vegetarian, glutenFree, dairyFree, nutFree]
+          example: ["vegan"]
+        allergens:
+          type: array
+          items:
+            type: string
+          example: ["peanuts"]
+        pickupLocation:
+          $ref: "#/components/schemas/Address"
+        pickupSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/PickupSlotInput"
+          minItems: 1
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2026-04-11T23:59:59Z"
+
+    UpdateListingRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Fresh Organic Salad Mix - Updated"
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        category:
+          type: string
+          enum: [Produce, Dairy, Bakery, Prepared, Beverage, Pantry, Frozen, Other]
+        imageUrl:
+          type: string
+          format: uri
+        quantity:
+          type: integer
+          minimum: 1
+        unit:
+          type: string
+          enum: [item, pound, kilogram, liter, gallon, dozen, box, package]
+        originalPrice:
+          type: number
+          format: double
+          minimum: 0
+        discountedPrice:
+          type: number
+          format: double
+          minimum: 0
+        dietaryInfo:
+          type: array
+          items:
+            type: string
+            enum: [vegan, vegetarian, glutenFree, dairyFree, nutFree]
+        allergens:
+          type: array
+          items:
+            type: string
+        pickupLocation:
+          $ref: "#/components/schemas/Address"
+        pickupSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/PickupSlotInput"
+        expiresAt:
+          type: string
+          format: date-time
+
+    PickupSlot:
+      type: object
+      required:
+        - start
+        - end
+        - reserved
+      properties:
+        start:
+          type: string
+          format: date-time
+          example: "2026-04-09T17:00:00Z"
+        end:
+          type: string
+          format: date-time
+          example: "2026-04-09T18:00:00Z"
+        reserved:
+          type: boolean
+          example: false
+
+    PickupSlotInput:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+          example: "2026-04-09T17:00:00Z"
+        end:
+          type: string
+          format: date-time
+          example: "2026-04-09T18:00:00Z"
+
+    ListingStatusTransitionRequest:
+      type: object
+      required:
+        - newStatus
+      properties:
+        newStatus:
+          type: string
+          enum: [Available, Reserved, Collected, Expired, Cancelled]
+          example: "Collected"
+        reason:
+          type: string
+          description: Reason for status transition (required for Cancelled/Expired)
+          example: "Item was damaged"
+
+    # Reservation schemas
+    Reservation:
+      type: object
+      required:
+        - id
+        - listing
+        - consumer
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        listing:
+          type: object
+          required:
+            - id
+            - title
+            - owner
+          properties:
+            id:
+              type: string
+              format: uuid
+            title:
+              type: string
+            owner:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+        consumer:
+          type: object
+          required:
+            - id
+            - name
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            phone:
+              type: string
+        pickupSlot:
+          $ref: "#/components/schemas/PickupSlot"
+        status:
+          type: string
+          enum: [Pending, Confirmed, Completed, Cancelled, NoShow]
+          example: "Confirmed"
+        verificationCode:
+          type: string
+          description: QR code or numeric code for verification
+          example: "GLP-A4B9-X2K7"
+        verifiedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T11:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T15:45:00Z"
+
+    CreateReservationRequest:
+      type: object
+      required:
+        - listingId
+        - pickupSlotIndex
+      properties:
+        listingId:
+          type: string
+          format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        pickupSlotIndex:
+          type: integer
+          minimum: 0
+          example: 0
+
+    VerifyReservationRequest:
+      type: object
+      required:
+        - verificationCode
+      properties:
+        verificationCode:
+          type: string
+          description: QR code scanned value or verification code
+          example: "GLP-A4B9-X2K7"
+
+    CancelReservationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: "Unable to make pickup time"
+
+    QRCodeResponse:
+      type: object
+      required:
+        - qrCode
+        - verificationCode
+      properties:
+        qrCode:
+          type: string
+          description: Base64-encoded PNG image of QR code
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        verificationCode:
+          type: string
+          description: Human-readable verification code
+          example: "GLP-A4B9-X2K7"
+
+    # Notification schemas
+    Notification:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - message
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "880e8400-e29b-41d4-a716-446655440003"
+        type:
+          type: string
+          enum: [ListingMatched, ReservationConfirmed, PickupReminder, ReservationCancelled, ListingExpiring, CarbonMilestone, SystemAlert]
+          example: "ListingMatched"
+        title:
+          type: string
+          example: "New Food Available Near You"
+        message:
+          type: string
+          example: "Fresh salad mix available at Fresh Market Co., expires in 2 hours"
+        data:
+          type: object
+          description: Additional context-specific data
+          example:
+            listingId: "660e8400-e29b-41d4-a716-446655440001"
+            distance: "0.5 miles"
+        read:
+          type: boolean
+          example: false
+        actionUrl:
+          type: string
+          format: uri
+          example: "/listings/660e8400-e29b-41d4-a716-446655440001"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-09T12:30:00Z"
+
+    NotificationSubscribeRequest:
+      type: object
+      required:
+        - fcmToken
+      properties:
+        fcmToken:
+          type: string
+          description: Firebase Cloud Messaging token from mobile client
+          example: "eKtMRLa0LV0:APA91bEi1G..."
+
+    # Carbon schemas
+    CarbonImpact:
+      type: object
+      required:
+        - totalCO2SavedKg
+        - weeklyTrend
+      properties:
+        totalCO2SavedKg:
+          type: number
+          format: double
+          example: 125.5
+        weeklyTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2026-04-03"
+              co2SavedKg:
+                type: number
+                format: double
+                example: 18.2
+          example:
+            - date: "2026-04-03"
+              co2SavedKg: 18.2
+            - date: "2026-04-04"
+              co2SavedKg: 22.1
+        equivalents:
+          type: object
+          properties:
+            treesPlanted:
+              type: number
+              format: double
+              example: 6.2
+            carMilesSaved:
+              type: number
+              format: double
+              example: 305.5
+            energyKwh:
+              type: number
+              format: double
+              example: 92.3
+
+    CarbonLeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - user
+        - co2SavedKg
+      properties:
+        rank:
+          type: integer
+          example: 1
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            profileImage:
+              type: string
+              format: uri
+            role:
+              type: string
+              enum: [Consumer, Retailer, DiningHall, Donor]
+        co2SavedKg:
+          type: number
+          format: double
+          example: 850.3
+
+    CommunityStats:
+      type: object
+      required:
+        - totalUsersActive
+        - totalCO2SavedKg
+        - totalItemsRescued
+        - weeklyActiveUsers
+      properties:
+        totalUsersActive:
+          type: integer
+          example: 2847
+        totalCO2SavedKg:
+          type: number
+          format: double
+          example: 45230.5
+        totalItemsRescued:
+          type: integer
+          example: 12453
+        weeklyActiveUsers:
+          type: integer
+          example: 892
+        topContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CarbonLeaderboardEntry"
+          maxItems: 5
+
+    # Analytics schemas
+    RescueRateAnalytics:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [daily, weekly, monthly]
+          example: "weekly"
+        rescueRate:
+          type: number
+          format: double
+          description: Percentage of listings successfully rescued (0-100)
+          example: 78.5
+        totalListings:
+          type: integer
+          example: 120
+        successfulPickups:
+          type: integer
+          example: 94
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2026-04-09"
+              listingCount:
+                type: integer
+                example: 15
+              rescueCount:
+                type: integer
+                example: 12
+
+    RevenueRecoveredAnalytics:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [daily, weekly, monthly]
+          example: "monthly"
+        totalOriginalValue:
+          type: number
+          format: double
+          example: 5250.75
+        totalDiscountedValue:
+          type: number
+          format: double
+          example: 1575.20
+        savingsToConsumers:
+          type: number
+          format: double
+          example: 3675.55
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2026-04-09"
+              originalValue:
+                type: number
+                format: double
+              discountedValue:
+                type: number
+                format: double
+
+    PeakSlotsAnalytics:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-04-09"
+        peakHours:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+                example: 17
+              reservationCount:
+                type: integer
+                example: 28
+              availableSlots:
+                type: integer
+                example: 8
+          example:
+            - hour: 17
+              reservationCount: 28
+              availableSlots: 8
+            - hour: 18
+              reservationCount: 32
+              availableSlots: 3
+
+    # Error schemas
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "Bad Request"
+        message:
+          type: string
+          example: "Email is required"
+        code:
+          type: string
+          example: "INVALID_INPUT"
+        details:
+          type: object
+          description: Additional error details
+          example:
+            field: "email"
+            reason: "Invalid email format"
+
+    # Dashboard schemas
+    DashboardResponse:
+      type: object
+      properties:
+        userRole:
+          type: string
+          enum: [Consumer, Retailer, DiningHall, Donor]
+        summary:
+          type: object
+        recentActivity:
+          type: array
+        recommendations:
+          type: array
+
+paths:
+  # Authentication endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email, password, and role
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        201:
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Registration successful. Please verify your email."
+                  user:
+                    $ref: "#/components/schemas/User"
+        400:
+          description: Invalid input or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user with email and password, returns JWT tokens
+      operationId: loginUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        401:
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Use refresh token to obtain a new access token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        200:
+          description: New tokens issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refreshToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  expiresIn:
+                    type: integer
+                    example: 3600
+        401:
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email address
+      description: Verify email using token sent to user's inbox
+      operationId: verifyEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        200:
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email verified successfully"
+        400:
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth2 initiation
+      description: Redirect to Google OAuth2 consent screen
+      operationId: googleOAuthStart
+      security: []
+      parameters:
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+            example: "https://app.greenloop.app/auth/callback"
+      responses:
+        302:
+          description: Redirect to Google OAuth2 consent screen
+        400:
+          description: Invalid redirect URI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/google/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth2 callback
+      description: Handle OAuth2 callback from Google
+      operationId: googleOAuthCallback
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Authorization code from Google
+            example: "4/0AX4XfWg..."
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+            description: CSRF protection state
+            example: "abc123xyz"
+      responses:
+        302:
+          description: Redirect with tokens in fragment or cookie
+        400:
+          description: Invalid authorization code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # User endpoints
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Retrieve the authenticated user's profile information
+      operationId: getCurrentUser
+      responses:
+        200:
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update the current user's profile information
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Jane Doe"
+                bio:
+                  type: string
+                  example: "Food waste warrior"
+                profileImage:
+                  type: string
+                  format: uri
+                address:
+                  $ref: "#/components/schemas/Address"
+                phone:
+                  type: string
+                  format: phone
+      responses:
+        200:
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}/dashboard:
+    get:
+      tags:
+        - Users
+      summary: Get user dashboard
+      description: Get role-specific dashboard data for a user
+      operationId: getUserDashboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Dashboard data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - cannot access other user's dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Listing endpoints
+  /listings:
+    get:
+      tags:
+        - Listings
+      summary: Get available listings
+      description: Search and filter available food listings with geolocation support
+      operationId: getListings
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: lat
+          in: query
+          schema:
+            type: number
+            format: double
+            example: 37.7749
+          description: Latitude for location-based search
+        - name: lng
+          in: query
+          schema:
+            type: number
+            format: double
+            example: -122.4194
+          description: Longitude for location-based search
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: double
+            default: 5
+            example: 5
+          description: Search radius in miles
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [Produce, Dairy, Bakery, Prepared, Beverage, Pantry, Frozen, Other]
+            example: "Produce"
+          description: Filter by food category
+        - name: dietary
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [vegan, vegetarian, glutenFree, dairyFree, nutFree]
+            style: form
+            explode: true
+            example: [vegan, glutenFree]
+          description: Filter by dietary requirements
+        - name: allergens
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+            style: form
+            explode: true
+            example: [peanuts]
+          description: Exclude by allergens
+        - name: priceMin
+          in: query
+          schema:
+            type: number
+            format: double
+            example: 0
+          description: Minimum price filter
+        - name: priceMax
+          in: query
+          schema:
+            type: number
+            format: double
+            example: 10
+          description: Maximum price filter
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [distance, price, expiresAt, createdAt]
+            default: distance
+            example: distance
+          description: Sort results by field
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+            example: 20
+      responses:
+        200:
+          description: Listings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Listing"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      pages:
+                        type: integer
+        400:
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - Listings
+      summary: Create new listing
+      description: Create a new food listing (Retailer, DiningHall, or Donor only)
+      operationId: createListing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateListingRequest"
+      responses:
+        201:
+          description: Listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - user role cannot create listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /listings/{id}:
+    get:
+      tags:
+        - Listings
+      summary: Get listing details
+      description: Retrieve detailed information about a specific listing
+      operationId: getListing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Listing details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        404:
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      tags:
+        - Listings
+      summary: Update listing
+      description: Update a listing (owner only)
+      operationId: updateListing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListingRequest"
+      responses:
+        200:
+          description: Listing updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - not listing owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Listings
+      summary: Delete listing
+      description: Delete a listing (owner only)
+      operationId: deleteListing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Listing deleted
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - not listing owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /listings/{id}/status:
+    patch:
+      tags:
+        - Listings
+      summary: Update listing status
+      description: Transition listing status (Available→Reserved→Collected/Expired)
+      operationId: updateListingStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingStatusTransitionRequest"
+      responses:
+        200:
+          description: Listing status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        400:
+          description: Invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - not listing owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        409:
+          description: Conflict - invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Reservation endpoints
+  /reservations:
+    post:
+      tags:
+        - Reservations
+      summary: Create reservation
+      description: Reserve a food listing for pickup
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReservationRequest"
+      responses:
+        201:
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - must be Consumer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Listing or slot not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        409:
+          description: Conflict - slot already reserved or listing unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/my:
+    get:
+      tags:
+        - Reservations
+      summary: Get my reservations
+      description: Get all reservations for the current consumer
+      operationId: getMyReservations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Pending, Confirmed, Completed, Cancelled, NoShow]
+          description: Filter by status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        200:
+          description: Reservations retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reservation"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/incoming:
+    get:
+      tags:
+        - Reservations
+      summary: Get incoming reservations
+      description: Get reservations for listings owned by the current user (owner view)
+      operationId: getIncomingReservations
+      parameters:
+        - name: listingId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by listing ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Pending, Confirmed, Completed, Cancelled, NoShow]
+          description: Filter by status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        200:
+          description: Incoming reservations retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Reservation"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/{id}/verify:
+    patch:
+      tags:
+        - Reservations
+      summary: Verify reservation pickup
+      description: Verify pickup by scanning QR code (listing owner only)
+      operationId: verifyReservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyReservationRequest"
+      responses:
+        200:
+          description: Reservation verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        400:
+          description: Invalid verification code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - not listing owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/{id}/cancel:
+    patch:
+      tags:
+        - Reservations
+      summary: Cancel reservation
+      description: Cancel a reservation (consumer or listing owner)
+      operationId: cancelReservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelReservationRequest"
+      responses:
+        200:
+          description: Reservation cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - cannot cancel this reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/{id}/qr:
+    get:
+      tags:
+        - Reservations
+      summary: Get QR code
+      description: Get QR code for reservation verification
+      operationId: getReservationQR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: QR code retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCodeResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - not reservation owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        404:
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Notification endpoints
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get notifications
+      description: Get all notifications for the current user
+      operationId: getNotifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Return only unread notifications
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ListingMatched, ReservationConfirmed, PickupReminder, ReservationCancelled, ListingExpiring, CarbonMilestone, SystemAlert]
+          description: Filter by notification type
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        200:
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      unreadCount:
+                        type: integer
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/subscribe:
+    post:
+      tags:
+        - Notifications
+      summary: Subscribe to notifications
+      description: Register FCM token for push notifications
+      operationId: subscribeNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationSubscribeRequest"
+      responses:
+        201:
+          description: Subscribed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Successfully subscribed to notifications"
+        400:
+          description: Invalid FCM token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Notifications
+      summary: Unsubscribe from notifications
+      description: Unsubscribe from push notifications
+      operationId: unsubscribeNotifications
+      parameters:
+        - name: fcmToken
+          in: query
+          required: true
+          schema:
+            type: string
+          description: FCM token to unsubscribe
+      responses:
+        204:
+          description: Unsubscribed successfully
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Carbon endpoints
+  /carbon/my-impact:
+    get:
+      tags:
+        - Carbon
+      summary: Get my carbon impact
+      description: Get the current user's CO2 saved, weekly trend, and equivalents
+      operationId: getMyCarbonImpact
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, allTime]
+            default: month
+          description: Time period for trend data
+      responses:
+        200:
+          description: Carbon impact data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CarbonImpact"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /carbon/leaderboard:
+    get:
+      tags:
+        - Carbon
+      summary: Get carbon leaderboard
+      description: Get global carbon impact leaderboard
+      operationId: getCarbonLeaderboard
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [Consumer, Retailer, DiningHall, Donor]
+          description: Filter leaderboard by user role
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+          description: Number of entries to return
+      responses:
+        200:
+          description: Leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CarbonLeaderboardEntry"
+                  userRank:
+                    type: integer
+                    description: Current user's rank (if authenticated)
+                    example: 42
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /carbon/community:
+    get:
+      tags:
+        - Carbon
+      summary: Get community carbon stats
+      description: Get aggregate community impact statistics
+      operationId: getCommunityStats
+      responses:
+        200:
+          description: Community stats retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityStats"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Analytics endpoints
+  /analytics/rescue-rate:
+    get:
+      tags:
+        - Analytics
+      summary: Get rescue rate analytics
+      description: Get food rescue rate statistics (Retailer/DiningHall only)
+      operationId: getRescueRateAnalytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: weekly
+          description: Analytics period
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-09"
+      responses:
+        200:
+          description: Rescue rate analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RescueRateAnalytics"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - must be Retailer or DiningHall
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analytics/revenue-recovered:
+    get:
+      tags:
+        - Analytics
+      summary: Get revenue recovered analytics
+      description: Get financial impact and revenue recovery (Retailer/DiningHall only)
+      operationId: getRevenueRecoveredAnalytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: monthly
+          description: Analytics period
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-09"
+      responses:
+        200:
+          description: Revenue analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueRecoveredAnalytics"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - must be Retailer or DiningHall
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analytics/peak-slots:
+    get:
+      tags:
+        - Analytics
+      summary: Get peak slot analytics
+      description: Get peak pickup time analysis (Retailer/DiningHall only)
+      operationId: getPeakSlotsAnalytics
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+            example: "2026-04-09"
+          description: Date to analyze (defaults to today)
+        - name: listingId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific listing
+      responses:
+        200:
+          description: Peak slots analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PeakSlotsAnalytics"
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        403:
+          description: Forbidden - must be Retailer or DiningHall
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
