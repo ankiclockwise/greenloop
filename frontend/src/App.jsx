@@ -4,6 +4,7 @@ import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
+import { DiscoveryFeed } from "./pages/DiscoveryFeed";
 
 export default function App() {
   return (
@@ -29,6 +30,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feed"
+        element={
+          <ProtectedRoute>
+            <DiscoveryFeed />
           </ProtectedRoute>
         }
       />
