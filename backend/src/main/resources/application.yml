@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: greenloop-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/greenloop}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: email, profile
+
+server:
+  port: 8080
+
+greenloop:
+  app:
+    base-url: ${APP_BASE_URL:http://localhost:8080}
+    from-email: ${FROM_EMAIL:noreply@greenloop.app}
+    frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:change-this-in-production-min-32-chars}
+    access-token-expiry-ms: 3600000       # 1 hour
+    refresh-token-expiry-ms: 604800000    # 7 days
+  verification:
+    token-expiry-hours: 24
+    rate-limit-per-hour: 3
+
+websocket:
+  allowed-origins: ${FRONTEND_URL:http://localhost:5173}

@@ -1,0 +1,47 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   BASE — Global resets, design tokens, and element defaults
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #10231a;
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 153, 0.9), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(78, 157, 110, 0.22), transparent 35%),
+    linear-gradient(135deg, #fbf7ef 0%, #eef6ef 48%, #dcefdc 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: #10231a;
+}
+
+a {
+  color: #14603d;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}

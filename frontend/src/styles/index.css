@@ -1,0 +1,8 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   STYLES ENTRY POINT
+   Add new feature stylesheets here as the app grows.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@import "./base.css";   /* global resets, :root, body, links         */
+@import "./auth.css";   /* login, signup, dashboard, route guards     */
+@import "./feed.css";   /* discovery feed, filter bar, listing cards  */

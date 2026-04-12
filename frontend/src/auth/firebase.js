@@ -19,10 +19,15 @@ export const firebaseConfigError =
     ? `Firebase config is missing: ${missingKeys.join(", ")}. Add them to frontend/.env before signing in.`
     : "";
 
-if (firebaseConfigError) {
+const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
+
+if (firebaseConfigError && !useMockAuth) {
   console.warn(firebaseConfigError);
 }
 
-const app = firebaseConfigError ? null : initializeApp(firebaseConfig);
+const app = !useMockAuth && !firebaseConfigError
+  ? initializeApp(firebaseConfig)
+  : null;
 
 export const auth = app ? getAuth(app) : null;
+export const usingMockAuth = useMockAuth;

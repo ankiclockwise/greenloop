@@ -1,46 +1,10 @@
-:root {
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
-  color: #10231a;
-  background:
-    radial-gradient(circle at top left, rgba(255, 214, 153, 0.9), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(78, 157, 110, 0.22), transparent 35%),
-    linear-gradient(135deg, #fbf7ef 0%, #eef6ef 48%, #dcefdc 100%);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  font-weight: 400;
-}
+/* ─────────────────────────────────────────────────────────────────────────
+   AUTH — Login, Signup, Dashboard, and route-guard status screens
+   Components: AuthShell, LoginPage, SignupPage, DashboardPage,
+               ProtectedRoute, PublicOnlyRoute
+   ───────────────────────────────────────────────────────────────────────── */
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  color: #10231a;
-}
-
-a {
-  color: #14603d;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-#root {
-  min-height: 100vh;
-}
+/* ── Shared shell layouts ─────────────────────────────────────────────── */
 
 .auth-shell,
 .dashboard-shell {
@@ -55,6 +19,8 @@ input {
   gap: 28px;
 }
 
+/* ── Shared card chrome ───────────────────────────────────────────────── */
+
 .auth-hero,
 .auth-panel,
 .dashboard-card {
@@ -62,6 +28,8 @@ input {
   border-radius: 28px;
   box-shadow: 0 20px 60px rgba(16, 35, 26, 0.08);
 }
+
+/* ── Auth hero (left column on login/signup) ──────────────────────────── */
 
 .auth-hero {
   padding: 48px;
@@ -80,6 +48,8 @@ input {
   border-radius: 50%;
   background: rgba(255, 222, 173, 0.16);
 }
+
+/* ── Pill labels (brand chip, eyebrow, impact kicker) ─────────────────── */
 
 .brand-chip,
 .eyebrow,
@@ -115,6 +85,8 @@ input {
   color: rgba(243, 247, 239, 0.84);
 }
 
+/* ── Impact card (inside hero) ────────────────────────────────────────── */
+
 .impact-card {
   margin-top: 32px;
   padding: 22px;
@@ -141,6 +113,8 @@ input {
   line-height: 1.3;
 }
 
+/* ── Auth panel (right column form area) ─────────────────────────────── */
+
 .auth-panel,
 .dashboard-card {
   padding: 36px;
@@ -162,6 +136,8 @@ input {
   margin: 0;
   color: #4f6357;
 }
+
+/* ── Auth form ────────────────────────────────────────────────────────── */
 
 .auth-form {
   display: grid;
@@ -191,6 +167,8 @@ input {
   box-shadow: 0 0 0 4px rgba(30, 117, 72, 0.12);
   transform: translateY(-1px);
 }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
 
 .auth-button,
 .secondary-button,
@@ -249,6 +227,8 @@ input {
   font-weight: 700;
 }
 
+/* ── Divider between OAuth and email form ─────────────────────────────── */
+
 .auth-divider {
   position: relative;
   display: grid;
@@ -271,6 +251,8 @@ input {
   font-size: 0.86rem;
 }
 
+/* ── Inline form feedback ─────────────────────────────────────────────── */
+
 .form-message {
   margin: 0;
   border-radius: 14px;
@@ -288,6 +270,8 @@ input {
   font-size: 0.95rem;
   color: #4f6357;
 }
+
+/* ── Route-guard status screens (ProtectedRoute / PublicOnlyRoute) ─────── */
 
 .page-status {
   min-height: 100vh;
@@ -318,6 +302,8 @@ input {
   margin: 0;
   color: #4f6357;
 }
+
+/* ── Dashboard ────────────────────────────────────────────────────────── */
 
 .dashboard-card {
   max-width: 760px;
@@ -351,6 +337,8 @@ input {
 .dashboard-metrics span {
   color: #4f6357;
 }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
   .auth-shell {
