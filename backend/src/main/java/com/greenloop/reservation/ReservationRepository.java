@@ -75,7 +75,7 @@ public interface ReservationRepository extends JpaRepository<Object, Long> {
      * @param id the reservation ID
      * @return optional containing the reservation, or empty if not found
      */
-    Optional<?> findById(Long id);
+    Optional<Object> findById(Long id);
 
     /**
      * Finds all reservations for a listing.

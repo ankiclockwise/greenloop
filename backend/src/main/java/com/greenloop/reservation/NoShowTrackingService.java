@@ -1,5 +1,8 @@
 package com.greenloop.reservation;
 
+import com.greenloop.listing.ListingRepository;
+import com.greenloop.realtime.ListingEventPublisher;
+import com.greenloop.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -81,8 +84,8 @@ public class NoShowTrackingService {
             LocalDateTime now = LocalDateTime.now();
 
             // Check if reservation is still RESERVED and pickup window has expired
-            if (!RESERVATION_STATUS_RESERVED.equals(res.getStatus())) {
-                log.debug("Reservation {} is not in RESERVED status. Current status: {}", reservationId, res.getStatus());
+            if (!RESERVATION_STATUS_RESERVED.equals(getStatus(res))) {
+                log.debug("Reservation {} is not in RESERVED status. Current status: {}", reservationId, getStatus(res));
                 return false;
             }
 
@@ -97,8 +100,8 @@ public class NoShowTrackingService {
             // Mark reservation as NO_SHOW
             log.info("Marking reservation {} as NO_SHOW (pickup window expired at {})", reservationId, pickupWindowEnd);
 
-            res.setStatus(RESERVATION_STATUS_NO_SHOW);
-            res.setUpdatedAt(now);
+            setStatus(res, RESERVATION_STATUS_NO_SHOW);
+            setUpdatedAt(res, now);
             reservationRepository.save(res);
 
             // Get associated user
@@ -129,8 +132,8 @@ public class NoShowTrackingService {
 
             if (listing.isPresent()) {
                 var listingEntity = listing.get();
-                listingEntity.setStatus(LISTING_STATUS_AVAILABLE);
-                listingEntity.setUpdatedAt(now);
+                setStatus(listingEntity, LISTING_STATUS_AVAILABLE);
+                setUpdatedAt(listingEntity, now);
                 listingRepository.save(listingEntity);
 
                 log.info("Listing {} returned to AVAILABLE status after no-show", listingId);
@@ -308,6 +311,34 @@ public class NoShowTrackingService {
             method.invoke(user, status);
         } catch (Exception e) {
             log.error("Could not set accountStatus on user", e);
+        }
+    }
+
+    private String getStatus(Object entity) {
+        try {
+            var method = entity.getClass().getMethod("getStatus");
+            return (String) method.invoke(entity);
+        } catch (Exception e) {
+            log.warn("Could not extract status from {}", entity.getClass().getSimpleName(), e);
+            return null;
+        }
+    }
+
+    private void setStatus(Object entity, String status) {
+        try {
+            var method = entity.getClass().getMethod("setStatus", String.class);
+            method.invoke(entity, status);
+        } catch (Exception e) {
+            log.error("Could not set status on {}", entity.getClass().getSimpleName(), e);
+        }
+    }
+
+    private void setUpdatedAt(Object entity, LocalDateTime time) {
+        try {
+            var method = entity.getClass().getMethod("setUpdatedAt", LocalDateTime.class);
+            method.invoke(entity, time);
+        } catch (Exception e) {
+            log.error("Could not set updatedAt on {}", entity.getClass().getSimpleName(), e);
         }
     }
 }

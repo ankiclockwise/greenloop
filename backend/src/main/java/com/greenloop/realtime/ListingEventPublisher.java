@@ -6,6 +6,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -168,7 +170,7 @@ public class ListingEventPublisher {
             dto.setDescription(getFieldValue(listing, "description", String.class));
             dto.setCategory(getFieldValue(listing, "category", String.class));
             dto.setStatus(getFieldValue(listing, "status", String.class));
-            dto.setEstimatedValue(getFieldValue(listing, "estimatedValue", Object.class));
+            dto.setEstimatedValue((BigDecimal) getFieldValue(listing, "estimatedValue", Object.class));
             dto.setImageUrl(getFieldValue(listing, "imageUrl", String.class));
             dto.setDonorId(getFieldValue(listing, "donorId", Long.class));
             dto.setDonorName(getFieldValue(listing, "donorName", String.class));

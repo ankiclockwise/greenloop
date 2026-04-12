@@ -5,6 +5,7 @@ import { ListingCard } from "../components/feed/ListingCard";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useFeedWebSocket } from "../hooks/useFeedWebSocket";
 import { useAuth } from "../auth/AuthProvider";
+import { DEFAULT_MOCK_LISTINGS } from "../data/mockListings";
 
 export function DiscoveryFeed() {
   const { user } = useAuth();
@@ -36,9 +37,16 @@ export function DiscoveryFeed() {
       if (filters.allergens.length > 0) params.allergens = filters.allergens.join(",");
       if (filters.priceRange) params.priceRange = filters.priceRange;
       const response = await axios.get("/api/listings", { params });
-      setListings(response.data || []);
+      const data = response.data || [];
+      if (data.length === 0) {
+        setError("No live listings found. Showing sample listings for demo.");
+        setListings(DEFAULT_MOCK_LISTINGS);
+      } else {
+        setListings(data);
+      }
     } catch {
-      setError("Could not load listings. The backend may not be running yet.");
+      setError("Could not load listings. Showing sample listings for demo.");
+      setListings(DEFAULT_MOCK_LISTINGS);
     } finally {
       setLoading(false);
     }
@@ -68,6 +76,8 @@ export function DiscoveryFeed() {
   }
 
   const autodonations = listings.filter((l) => l.price === 0);
+
+  const showSampleFeed = !geoLoading && (!lat || !lng);
 
   return (
     <div className="feed-shell">
@@ -126,34 +136,56 @@ export function DiscoveryFeed() {
           </div>
         )}
 
-        {!geoLoading && lat && lng && (
+        {!geoLoading && (
           <>
-            {loading ? (
-              <div className="listing-grid">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="listing-skeleton" />
-                ))}
+            {showSampleFeed && (
+              <div className="feed-fallback">
+                <div className="feed-fallback-copy">
+                  <h3>Location is needed to show nearby listings.</h3>
+                  <p>Allow location access or enter a city/ZIP to see available listings around you. Sample listings are shown below for demo purposes.</p>
+                </div>
+                {!showLocationBar && (
+                  <button className="auth-button" type="button" onClick={() => setShowLocationBar(true)}>
+                    Enter location manually
+                  </button>
+                )}
               </div>
-            ) : listings.length > 0 ? (
-              <div className="listing-grid">
-                {listings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
+            )}
+
+            {lat && lng ? (
+              loading ? (
+                <div className="listing-grid">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="listing-skeleton" />
+                  ))}
+                </div>
+              ) : listings.length > 0 ? (
+                <div className="listing-grid">
+                  {listings.map((listing) => (
+                    <ListingCard key={listing.id} listing={listing} />
+                  ))}
+                </div>
+              ) : (
+                <div className="listing-grid">
+                  <div className="feed-empty">
+                    <div className="feed-empty-icon">🍃</div>
+                    <h3>No listings near you yet</h3>
+                    <p>Check back soon — donors in your area will start sharing food listings.</p>
+                    <button
+                      className="auth-button"
+                      type="button"
+                      onClick={() => setShowLocationBar(true)}
+                    >
+                      Try a different location
+                    </button>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="listing-grid">
-                <div className="feed-empty">
-                  <div className="feed-empty-icon">🍃</div>
-                  <h3>No listings near you yet</h3>
-                  <p>Check back soon — donors in your area will start sharing food listings.</p>
-                  <button
-                    className="auth-button"
-                    type="button"
-                    onClick={() => setShowLocationBar(true)}
-                  >
-                    Try a different location
-                  </button>
-                </div>
+                {DEFAULT_MOCK_LISTINGS.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
               </div>
             )}
           </>

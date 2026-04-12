@@ -31,7 +31,7 @@ public class ReservationStatusMachine {
     private final ReservationRepository reservationRepository;
 
     // State transition matrix
-    private static final Map<String, EnumSet<String>> VALID_TRANSITIONS = new HashMap<>();
+    private static final Map<String, EnumSet<ReservationStatus>> VALID_TRANSITIONS = new HashMap<>();
 
     static {
         // From RESERVED state, we can transition to:
@@ -111,7 +111,7 @@ public class ReservationStatusMachine {
 
             // Apply transition
             setStatus(res, newStatus);
-            res.setUpdatedAt(LocalDateTime.now());
+            setUpdatedAt(res, LocalDateTime.now());
 
             // Save to database
             reservationRepository.save(res);
@@ -208,6 +208,22 @@ public class ReservationStatusMachine {
         } catch (Exception e) {
             log.error("Could not set status on reservation", e);
             throw new RuntimeException("Unable to set reservation status", e);
+        }
+    }
+
+    /**
+     * Sets the updatedAt timestamp of a reservation.
+     *
+     * @param reservation the reservation entity
+     * @param updatedAt the timestamp to set
+     */
+    private void setUpdatedAt(Object reservation, LocalDateTime updatedAt) {
+        try {
+            var method = reservation.getClass().getMethod("setUpdatedAt", LocalDateTime.class);
+            method.invoke(reservation, updatedAt);
+        } catch (Exception e) {
+            log.error("Could not set updatedAt on reservation", e);
+            throw new RuntimeException("Unable to set reservation updatedAt", e);
         }
     }
 

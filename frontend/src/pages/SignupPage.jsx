@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthShell } from "../components/AuthShell";
+import { AuthShell } from "../auth/AuthShell";
 import { useAuth } from "../auth/AuthProvider";
 
 function validateSignup({ fullName, email, password, confirmPassword }) {
