@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { PublicOnlyRoute } from "./auth/PublicOnlyRoute";
-import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
+import { ActorOnboardingPage } from "./pages/ActorOnboardingPage";
 import { DiscoveryFeed } from "./pages/DiscoveryFeed";
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DiscoveryFeed />
           </ProtectedRoute>
         }
       />
@@ -37,7 +37,15 @@ export default function App() {
         path="/feed"
         element={
           <ProtectedRoute>
-            <DiscoveryFeed />
+            <Navigate to="/" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <ActorOnboardingPage />
           </ProtectedRoute>
         }
       />

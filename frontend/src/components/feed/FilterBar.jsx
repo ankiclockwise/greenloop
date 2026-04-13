@@ -1,7 +1,5 @@
-import { useState } from "react";
+import { CATEGORY_OPTIONS, TAG_OPTIONS } from "../../data/mockListings";
 
-const CATEGORIES = ["Produce", "Bakery", "Prepared", "Dairy", "Dry Goods"];
-const DIETARY = ["Vegan", "Vegetarian", "Gluten-Free", "Halal", "Kosher"];
 const ALLERGENS = ["Nuts", "Dairy", "Eggs", "Soy", "Wheat"];
 const PRICE_OPTIONS = [
   { value: "free", label: "Free only" },
@@ -24,11 +22,12 @@ export function FilterBar({ filters, onChange }) {
   }
 
   function clearAll() {
-    onChange({ category: "", dietary: [], allergens: [], priceRange: "", radius: 5 });
+    onChange({ category: "", tags: [], dietary: [], allergens: [], priceRange: "", radius: 5 });
   }
 
   const activeCount =
     (filters.category ? 1 : 0) +
+    filters.tags.length +
     filters.dietary.length +
     filters.allergens.length +
     (filters.priceRange ? 1 : 0) +
@@ -45,7 +44,7 @@ export function FilterBar({ filters, onChange }) {
           onChange={(e) => set("category", e.target.value)}
         >
           <option value="">All</option>
-          {CATEGORIES.map((c) => (
+          {CATEGORY_OPTIONS.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
@@ -75,10 +74,24 @@ export function FilterBar({ filters, onChange }) {
         </div>
       </div>
 
+      <div className="filter-row">
+        <span className="filter-label">Tags</span>
+        {TAG_OPTIONS.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            className={`filter-chip${filters.tags.includes(tag) ? " active" : ""}`}
+            onClick={() => toggleMulti("tags", tag)}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+
       {/* Row 2: Dietary */}
       <div className="filter-row">
         <span className="filter-label">Dietary</span>
-        {DIETARY.map((tag) => (
+        {TAG_OPTIONS.slice(0, 5).map((tag) => (
           <button
             key={tag}
             type="button"
@@ -114,6 +127,12 @@ export function FilterBar({ filters, onChange }) {
               <button type="button" onClick={() => set("category", "")}>✕</button>
             </span>
           )}
+          {filters.tags.map((tag) => (
+            <span key={tag} className="active-chip">
+              {tag}
+              <button type="button" onClick={() => toggleMulti("tags", tag)}>✕</button>
+            </span>
+          ))}
           {filters.dietary.map((tag) => (
             <span key={tag} className="active-chip">
               {tag}

@@ -24,5 +24,13 @@ export function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  if (!user.actor && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (user.actor && location.pathname === "/onboarding") {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }

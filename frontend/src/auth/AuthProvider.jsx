@@ -17,13 +17,56 @@ import { auth, firebaseConfigError, usingMockAuth } from "./firebase";
 
 const AuthContext = createContext(null);
 const googleProvider = new GoogleAuthProvider();
+const ACTOR_STORAGE_KEY = "greenloop-user-actors";
+
+function readStoredActors() {
+  try {
+    return JSON.parse(window.localStorage.getItem(ACTOR_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getStoredActor(email) {
+  if (!email) {
+    return "";
+  }
+
+  return readStoredActors()[email] || "";
+}
+
+function storeActor(email, actor) {
+  if (!email || !actor) {
+    return;
+  }
+
+  const next = readStoredActors();
+  next[email] = actor;
+  window.localStorage.setItem(ACTOR_STORAGE_KEY, JSON.stringify(next));
+}
+
+function normalizeUser(nextUser) {
+  if (!nextUser) {
+    return null;
+  }
+
+  return {
+    uid: nextUser.uid,
+    email: nextUser.email,
+    displayName: nextUser.displayName,
+    emailVerified: nextUser.emailVerified,
+    photoURL: nextUser.photoURL || "",
+    actor: getStoredActor(nextUser.email)
+  };
+}
 
 function createMockUser({ email = "mock@example.com", fullName = "Mock User" } = {}) {
   return {
     uid: `mock-${Math.random().toString(36).slice(2, 11)}`,
     email,
     displayName: fullName,
-    emailVerified: true
+    emailVerified: true,
+    actor: getStoredActor(email)
   };
 }
 
@@ -41,7 +84,7 @@ export function AuthProvider({ children }) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
+      setUser(normalizeUser(nextUser));
       setLoading(false);
     });
 
@@ -61,7 +104,10 @@ export function AuthProvider({ children }) {
         setUser(mockUser);
         return { user: mockUser };
       }
-      return signInWithEmailAndPassword(auth, email, password);
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
+      const normalized = normalizeUser(credentials.user);
+      setUser(normalized);
+      return { ...credentials, user: normalized };
     },
     async loginWithGoogle() {
       if (!auth) {
@@ -72,7 +118,10 @@ export function AuthProvider({ children }) {
         setUser(mockUser);
         return { user: mockUser };
       }
-      return signInWithPopup(auth, googleProvider);
+      const credentials = await signInWithPopup(auth, googleProvider);
+      const normalized = normalizeUser(credentials.user);
+      setUser(normalized);
+      return { ...credentials, user: normalized };
     },
     async signup({ fullName, email, password }) {
       if (!auth) {
@@ -89,8 +138,17 @@ export function AuthProvider({ children }) {
           displayName: fullName.trim()
         });
       }
-      setUser(auth.currentUser);
-      return credentials;
+      const normalized = normalizeUser(auth.currentUser);
+      setUser(normalized);
+      return { ...credentials, user: normalized };
+    },
+    async setActor(actor) {
+      if (!user?.email || !actor) {
+        return;
+      }
+
+      storeActor(user.email, actor);
+      setUser((current) => (current ? { ...current, actor } : current));
     },
     async logout() {
       if (!auth) {
