@@ -74,4 +74,60 @@ public class ListingService {
             throw new IllegalArgumentException("Expiry time cannot be in the past");
         }
     }
+
+    public Listing updateListing(Long listingId, ListingUpdateRequest request) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new IllegalArgumentException("Listing not found with id: " + listingId));
+        if (request.getTitle() != null)
+            listing.setTitle(request.getTitle());
+        if (request.getDescription() != null)
+            listing.setDescription(request.getDescription());
+        if (request.getQuantity() != null)
+            listing.setQuantity(request.getQuantity());
+        if (request.getCategory() != null)
+            listing.setCategory(request.getCategory());
+        if (request.getUnit() != null)
+            listing.setUnit(request.getUnit());
+        if (request.getOriginalPrice() != null)
+            listing.setOriginalPrice(request.getOriginalPrice());
+        if (request.getDiscountedPrice() != null)
+            listing.setDiscountedPrice(request.getDiscountedPrice());
+        if (request.getDietaryInfo() != null)
+            listing.setDietaryInfo(request.getDietaryInfo());
+        if (request.getAllergens() != null)
+            listing.setAllergens(request.getAllergens());
+        if (request.getPickupAddress() != null)
+            listing.setPickupAddress(request.getPickupAddress());
+        if (request.getPickupCity() != null)
+            listing.setPickupCity(request.getPickupCity());
+        if (request.getPickupState() != null)
+            listing.setPickupState(request.getPickupState());
+        if (request.getPickupZipCode() != null)
+            listing.setPickupZipCode(request.getPickupZipCode());
+        if (request.getPickupLatitude() != null)
+            listing.setPickupLatitude(request.getPickupLatitude());
+        if (request.getPickupLongitude() != null)
+            listing.setPickupLongitude(request.getPickupLongitude());
+        if (request.getPickupWindowStart() != null)
+            listing.setPickupWindowStart(request.getPickupWindowStart());
+        if (request.getPickupWindowEnd() != null)
+            listing.setPickupWindowEnd(request.getPickupWindowEnd());
+        if (request.getExpiresAt() != null)
+            listing.setExpiresAt(request.getExpiresAt());
+
+        validatePickupWindow(listing);
+
+        Listing updatedListing = listingRepository.save(listing);
+        listingEventPublisher.publishListingUpdate(updatedListing);
+        return updatedListing;
+    }
+
+    public void deleteListing(Long listingId) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new IllegalArgumentException("Listing not found with id: " + listingId));
+
+        listingRepository.delete(listing);
+
+        // listingEventPublisher.publishListingDeletion(listingId);
+    }
 }

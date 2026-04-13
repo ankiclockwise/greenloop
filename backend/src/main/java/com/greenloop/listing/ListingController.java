@@ -35,4 +35,15 @@ public class ListingController {
     public List<Listing> getListingsByOwner(@PathVariable Long ownerId) {
         return listingService.getListingsByOwner(ownerId);
     }
+
+    @PatchMapping("/{id}")
+    public Listing updateListing(@PathVariable Long id,
+            @RequestBody ListingUpdateRequest request) {
+        return listingService.updateListing(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteListing(@PathVariable Long id) {
+        listingService.deleteListing(id);
+    }
 }
