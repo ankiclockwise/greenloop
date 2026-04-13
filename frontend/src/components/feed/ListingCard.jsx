@@ -1,35 +1,17 @@
-import { useState } from "react";
-import axios from "axios";
+import { ReservationStatusIndicator } from "./ReservationStatusIndicator";
 
-export function ListingCard({ listing }) {
-  const [reserved, setReserved] = useState(false);
-  const [reserving, setReserving] = useState(false);
-
+export function ListingCard({ listing, onSelect }) {
   const isFree = listing.price === 0;
   const displayPrice = isFree ? "Free" : `$${listing.price?.toFixed(2)}`;
 
-  function formatPickupWindow(start, end) {
+  function formatPickupWindow(end) {
     if (!end) return null;
     const time = new Date(end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     return `Pickup by ${time}`;
   }
 
-  async function handleReserve() {
-    if (reserved || reserving) return;
-    setReserving(true);
-    try {
-      await axios.post("/api/reservations", { listingId: listing.id });
-      setReserved(true);
-    } catch {
-      // Backend not connected yet — optimistically mark reserved in dev
-      setReserved(true);
-    } finally {
-      setReserving(false);
-    }
-  }
-
   return (
-    <article className="listing-card">
+    <article className="listing-card" onClick={() => onSelect(listing)}>
       {listing.imageUrl ? (
         <img className="listing-photo" src={listing.imageUrl} alt={listing.name} />
       ) : (
@@ -44,9 +26,14 @@ export function ListingCard({ listing }) {
           </span>
         </div>
 
-        {listing.category && (
-          <span className="listing-category">{listing.category}</span>
-        )}
+        <div className="listing-card-topline">
+          {listing.category ? <span className="listing-category">{listing.category}</span> : null}
+          <ReservationStatusIndicator status={listing.reservationStatus} />
+        </div>
+
+        {listing.quantity != null ? (
+          <p className="listing-summary">{listing.quantity} left from {listing.providerName}</p>
+        ) : null}
 
         <div className="listing-meta">
           {listing.distance != null && (
@@ -54,14 +41,14 @@ export function ListingCard({ listing }) {
           )}
           {listing.pickupWindowEnd && (
             <span className="listing-meta-item">
-              🕐 {formatPickupWindow(listing.pickupWindowStart, listing.pickupWindowEnd)}
+              🕐 {formatPickupWindow(listing.pickupWindowEnd)}
             </span>
           )}
         </div>
 
-        {((listing.dietary?.length > 0) || (listing.allergens?.length > 0)) && (
+        {((listing.tags?.length > 0) || (listing.allergens?.length > 0)) && (
           <div className="listing-tags">
-            {listing.dietary?.map((tag) => (
+            {listing.tags?.map((tag) => (
               <span key={tag} className="listing-tag">{tag}</span>
             ))}
             {listing.allergens?.map((tag) => (
@@ -72,11 +59,13 @@ export function ListingCard({ listing }) {
 
         <button
           type="button"
-          className={`reserve-button${reserved ? " reserved" : ""}`}
-          onClick={handleReserve}
-          disabled={reserving || reserved}
+          className="reserve-button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect(listing);
+          }}
         >
-          {reserving ? "Reserving…" : reserved ? "✓ Reserved" : "Reserve"}
+          View details
         </button>
       </div>
     </article>
