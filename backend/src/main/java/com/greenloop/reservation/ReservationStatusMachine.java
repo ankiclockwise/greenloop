@@ -23,7 +23,7 @@ import java.util.Map;
  * @author GreenLoop Team
  * @since 1.0.0
  */
-@Service
+// @Service
 public class ReservationStatusMachine {
 
     private static final Logger log = LoggerFactory.getLogger(ReservationStatusMachine.class);

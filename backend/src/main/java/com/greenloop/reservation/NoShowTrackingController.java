@@ -14,7 +14,7 @@ import java.util.Map;
  * @author GreenLoop Team
  * @since 1.0.0
  */
-@RestController
+// @RestController
 @RequestMapping("/api/v1/no-shows")
 public class NoShowTrackingController {
 

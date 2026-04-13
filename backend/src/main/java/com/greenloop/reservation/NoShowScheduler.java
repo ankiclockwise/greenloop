@@ -19,7 +19,7 @@ import java.util.List;
  * @author GreenLoop Team
  * @since 1.0.0
  */
-@Component
+// @Component
 public class NoShowScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(NoShowScheduler.class);

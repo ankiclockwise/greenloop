@@ -36,7 +36,7 @@ public class ListingService {
         listing.setStatus(ListingStatus.AVAILABLE);
 
         Listing savedListing = listingRepository.save(listing);
-        listingEventPublisher.publishNewListing(savedListing);
+        // listingEventPublisher.publishNewListing(savedListing);
         return savedListing;
     }
 
