@@ -1,4 +1,5 @@
 import { useAuth } from "../auth/AuthProvider";
+import { Link } from "react-router-dom";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -22,9 +23,14 @@ export function DashboardPage() {
             <span>Exchange Firebase ID token with the Java API</span>
           </article>
         </div>
-        <button className="secondary-button" type="button" onClick={() => logout()}>
-          Sign out
-        </button>
+        <div className="dashboard-actions">
+          <Link className="auth-button dashboard-link" to="/feed">
+            Open feed
+          </Link>
+          <button className="secondary-button" type="button" onClick={() => logout()}>
+            Sign out
+          </button>
+        </div>
       </section>
     </main>
   );
