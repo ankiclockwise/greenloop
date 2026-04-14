@@ -26,7 +26,7 @@ public class ReservationService {
                 .orElseThrow(() -> new IllegalArgumentException("Listing not found"));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
         if (!listing.getStatus().name().equals("AVAILABLE")) {
             throw new IllegalStateException("Listing is not available");

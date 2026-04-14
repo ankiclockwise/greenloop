@@ -8,14 +8,13 @@ import { ReservationConfirmation } from "../components/feed/ReservationConfirmat
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useFeedWebSocket } from "../hooks/useFeedWebSocket";
 import { useAuth } from "../auth/AuthProvider";
-import { DEFAULT_MOCK_LISTINGS, createListingFromForm } from "../data/mockListings";
 
 export function DiscoveryFeed() {
   const { user, logout } = useAuth();
   const { lat, lng, error: geoError, loading: geoLoading, setManualLocation } = useGeolocation();
   const { connected: wsConnected, newListings } = useFeedWebSocket();
 
-  const [listings, setListings] = useState(DEFAULT_MOCK_LISTINGS);
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [locationInput, setLocationInput] = useState("");
@@ -35,35 +34,62 @@ export function DiscoveryFeed() {
   });
 
   const fetchListings = useCallback(async (latitude, longitude) => {
-    if (!latitude || !longitude) return;
+    // Use default coordinates if location not available
+    const lat = latitude || 42.3732; // Default to Amherst, MA
+    const lng = longitude || -72.5199;
     try {
       setLoading(true);
       setError(null);
-      const params = { lat: latitude, lng: longitude, radius: filters.radius, sortBy: "distance" };
+      const params = { lat, lng, radius: filters.radius, sortBy: "distance" };
       if (filters.category) params.category = filters.category;
       if (filters.tags.length > 0) params.tags = filters.tags.join(",");
       if (filters.dietary.length > 0) params.dietary = filters.dietary.join(",");
       if (filters.allergens.length > 0) params.allergens = filters.allergens.join(",");
       if (filters.priceRange) params.priceRange = filters.priceRange;
       const response = await axios.get("/api/listings", { params });
-      const data = response.data || [];
-      if (data.length === 0) {
-        setError("No live listings found. Showing sample listings for demo.");
-        setListings(DEFAULT_MOCK_LISTINGS);
-      } else {
-        setListings(data);
-      }
-    } catch {
-      setError("Could not load listings. Showing sample listings for demo.");
-      setListings(DEFAULT_MOCK_LISTINGS);
+      const apiData = response.data || [];
+      // Transform API data to match frontend expectations
+      const data = apiData.map(listing => ({
+        id: listing.id,
+        name: listing.title,
+        description: listing.description,
+        category: listing.category,
+        price: listing.discountedPrice || listing.originalPrice || 0,
+        quantity: listing.quantity,
+        unit: listing.unit,
+        providerName: listing.owner?.name || 'Unknown',
+        pickupLocation: `${listing.pickupAddress}, ${listing.pickupCity}`,
+        pickupWindowStart: listing.pickupWindowStart,
+        pickupWindowEnd: listing.pickupWindowEnd,
+        dietary: listing.dietaryInfo ? [listing.dietaryInfo] : [],
+        allergens: listing.allergens ? [listing.allergens] : [],
+        tags: [], // API doesn't provide tags yet
+        imageUrl: listing.imageUrl,
+        reservationStatus: listing.status?.toLowerCase() === 'available' ? 'available' : 'reserved',
+        distance: 0, // Would need to calculate based on coordinates
+        latitude: listing.pickupLatitude,
+        longitude: listing.pickupLongitude
+      }));
+      setListings(data);
+    } catch (error) {
+      console.error("API call failed:", error);
+      setError("Could not load listings.");
+      setListings([]);
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
   useEffect(() => {
-    if (lat && lng) fetchListings(lat, lng);
+    fetchListings(lat, lng);
   }, [lat, lng, filters, fetchListings]);
+
+  // Initial load - try to fetch listings even without location
+  useEffect(() => {
+    if (!lat && !lng && !geoLoading) {
+      fetchListings(null, null);
+    }
+  }, [geoLoading, fetchListings]);
 
   useEffect(() => {
     if (newListings.length > 0) setListings((prev) => [...newListings, ...prev]);
@@ -173,14 +199,35 @@ export function DiscoveryFeed() {
     }
   }
 
-  function handleCreateListing(formValues) {
-    const nextListing = createListingFromForm(
-      formValues,
-      user?.displayName || user?.email,
-      user?.email
-    );
-    setListings((current) => [nextListing, ...current]);
+  const CATEGORY_MAP = {
+    "Produce": "PRODUCE",
+    "Bakery": "BAKERY",
+    "Prepared": "PREPARED",
+    "Dairy": "DAIRY",
+    "Dry Goods": "PANTRY",
+    "Beverages": "BEVERAGE",
+  };
+
+  async function handleCreateListing(formValues) {
     setShowDonateModal(false);
+    try {
+      await axios.post("/api/listings?ownerId=1", {
+        title: formValues.name,
+        description: formValues.description || formValues.name,
+        category: CATEGORY_MAP[formValues.category] || formValues.category.toUpperCase(),
+        quantity: parseInt(formValues.quantity, 10),
+        unit: "piece",
+        originalPrice: parseFloat(formValues.price) || 0,
+        discountedPrice: parseFloat(formValues.price) || 0,
+        pickupAddress: formValues.pickupLocation,
+        pickupWindowStart: formValues.pickupWindowStart,
+        pickupWindowEnd: formValues.pickupWindowEnd,
+        expiresAt: formValues.pickupWindowEnd,
+      });
+      fetchListings(lat, lng);
+    } catch (err) {
+      console.error("Failed to create listing:", err);
+    }
   }
 
   function handleOpenListing(listing) {

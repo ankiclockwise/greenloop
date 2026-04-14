@@ -1,5 +1,8 @@
 package com.greenloop.reservation;
 
+import com.greenloop.model.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,8 +16,19 @@ public class ReservationController {
     }
 
     @PostMapping
-    public Reservation createReservation(@RequestParam Long listingId,
-            @RequestParam Long userId) {
-        return reservationService.createReservation(listingId, userId);
+    public Reservation createReservation(@RequestBody CreateReservationRequest request) {
+        Long userId = resolveUserId(request.getUserId());
+        return reservationService.createReservation(request.getListingId(), userId);
+    }
+
+    private Long resolveUserId(Long userIdFromRequest) {
+        if (userIdFromRequest != null) {
+            return userIdFromRequest;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof User user) {
+            return user.getId();
+        }
+        return 1L; // default fallback
     }
 }
