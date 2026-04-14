@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL COMMENT 'User email address (unique)',
     name VARCHAR(255) NOT NULL COMMENT 'User full name',
     profile_picture_url VARCHAR(500) COMMENT 'URL to user profile picture from Google',
-    role VARCHAR(50) NOT NULL DEFAULT 'CONSUMER' COMMENT 'User role: CONSUMER, RETAILER, DINING_HALL, DONOR, ADMIN',
-    university_verified BOOLEAN DEFAULT FALSE COMMENT 'Verified as university user (.edu email)',
+    role VARCHAR(50) NOT NULL DEFAULT 'consumer' COMMENT 'User role: consumer, retailer, dining_hall, donor, admin',    university_verified BOOLEAN DEFAULT FALSE COMMENT 'Verified as university user (.edu email)',
     is_active BOOLEAN DEFAULT TRUE COMMENT 'User account active status',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
@@ -84,6 +83,77 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Security audit log for all user actions';
 
+-- Create listings table
+CREATE TABLE IF NOT EXISTS listings (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    owner_id BIGINT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(1000) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    image_url VARCHAR(500),
+    quantity INT NOT NULL,
+    unit VARCHAR(30) NOT NULL,
+    original_price DECIMAL(10,2),
+    discounted_price DECIMAL(10,2),
+    dietary_info VARCHAR(500),
+    allergens VARCHAR(500),
+    pickup_address VARCHAR(255),
+    pickup_city VARCHAR(100),
+    pickup_state VARCHAR(100),
+    pickup_zip_code VARCHAR(20),
+    pickup_latitude DOUBLE,
+    pickup_longitude DOUBLE,
+    pickup_window_start TIMESTAMP NOT NULL,
+    pickup_window_end TIMESTAMP NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'available',
+    reservation_count INT DEFAULT 0,
+    co2_saved_kg DECIMAL(10,2),
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_owner_id (owner_id),
+    INDEX idx_status (status),
+    INDEX idx_category (category),
+    INDEX idx_expires_at (expires_at),
+    INDEX idx_pickup_window_end (pickup_window_end)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Food listings created by donors/retailers';
+
+-- Email verification tokens
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id BINARY(16) PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_evt_user_id (user_id),
+    INDEX idx_evt_token (token),
+    INDEX idx_evt_expires_at (expires_at)
+);
+
+-- Reservations table
+CREATE TABLE IF NOT EXISTS reservations (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    listing_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'RESERVED',
+    pickup_window_end TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_res_listing_id (listing_id),
+    INDEX idx_res_user_id (user_id),
+    INDEX idx_res_status (status),
+    INDEX idx_res_pickup_window_end (pickup_window_end)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Reservations for food listings';
+
 -- Create initial data (optional)
 -- INSERT INTO users (email, name, role, university_verified, is_active)
 -- VALUES ('admin@greenloop.com', 'Admin User', 'ADMIN', TRUE, TRUE);
@@ -111,7 +181,10 @@ ALTER TABLE audit_logs COMMENT = 'Security audit logs';
 -- Set proper collation for string comparisons
 ALTER TABLE users MODIFY email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE users MODIFY name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE users MODIFY role VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE users MODIFY role VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'consumer';
+ALTER TABLE listings MODIFY category VARCHAR(50) NOT NULL;
+ALTER TABLE listings MODIFY status VARCHAR(30) NOT NULL DEFAULT 'available';
+ALTER TABLE reservations MODIFY status VARCHAR(50) NOT NULL DEFAULT 'RESERVED';
 
 -- Create stored procedures for common operations (optional)
 DELIMITER $$

@@ -2,7 +2,9 @@ package com.greenloop.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,7 +22,7 @@ public class User {
     @Column(name = "profile_picture_url")
     private String profilePictureUrl;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = UserRoleConverter.class)
     @Column(nullable = false)
     private UserRole role;
 
