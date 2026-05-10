@@ -1,0 +1,355 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   IMPACT — User impact, badges, and leaderboards
+   Components: ImpactPage
+   ───────────────────────────────────────────────────────────────────────── */
+
+.top-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.top-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: rgba(243, 247, 239, 0.78);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.top-tab:hover {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.top-tab.active {
+  background: #f6fbf5;
+  color: #14603d;
+  box-shadow: 0 8px 18px rgba(16, 35, 26, 0.12);
+}
+
+.impact-shell {
+  min-height: 100vh;
+}
+
+.impact-content {
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 16px 0 28px;
+}
+
+.impact-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(20, 96, 61, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 252, 246, 0.86);
+  color: #4f6357;
+  font-weight: 600;
+}
+
+.impact-hero {
+  padding: 12px 0 14px;
+}
+
+.impact-hero h2,
+.impact-panel h2 {
+  margin: 0 0 8px;
+  color: #10231a;
+  letter-spacing: 0;
+}
+
+.impact-hero h2 {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1;
+}
+
+.impact-hero p,
+.impact-panel p {
+  margin: 0;
+  max-width: 42rem;
+  color: #4f6357;
+  font-size: 0.92rem;
+}
+
+.impact-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.impact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(430px, 1.14fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.impact-left-column,
+.impact-right-column {
+  min-width: 0;
+}
+
+.impact-metric,
+.impact-panel,
+.badge-card {
+  border: 1px solid rgba(20, 96, 61, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 252, 246, 0.88);
+  box-shadow: 0 16px 38px rgba(16, 35, 26, 0.06);
+}
+
+.impact-metric {
+  min-height: 82px;
+  display: grid;
+  align-content: space-between;
+  gap: 8px;
+  padding: 12px;
+}
+
+.impact-metric span,
+.badge-card span {
+  color: #4f6357;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.impact-metric strong {
+  color: #14603d;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.impact-panel {
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+.badge-card {
+  position: relative;
+  min-height: 128px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: visible;
+}
+
+.badge-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 22px;
+}
+
+.badge-card.earned {
+  border-color: rgba(16, 96, 61, 0.48);
+  background: linear-gradient(135deg, #14603d, #1e7548);
+  color: #f6fbf5;
+}
+
+.badge-mark {
+  display: inline-flex;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #ecf5ee;
+  color: #14603d;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.badge-card:not(.earned) .badge-mark {
+  background: rgba(79, 99, 87, 0.12);
+  color: #4f6357;
+}
+
+.badge-info-button {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-left: auto;
+  border: 1px solid rgba(20, 96, 61, 0.18);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #14603d;
+  cursor: help;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.badge-card.earned .badge-info-button {
+  border-color: rgba(246, 251, 245, 0.42);
+  background: rgba(246, 251, 245, 0.16);
+  color: #ffffff;
+}
+
+.badge-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  width: min(210px, 60vw);
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #10231a;
+  color: #f6fbf5;
+  box-shadow: 0 12px 28px rgba(16, 35, 26, 0.18);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-align: left;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.badge-info-button:hover .badge-tooltip,
+.badge-info-button:focus-visible .badge-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.badge-card h3 {
+  margin: 0 0 5px;
+  font-size: 0.84rem;
+  line-height: 1.15;
+}
+
+.badge-card.earned h3,
+.badge-card.earned span {
+  color: #ffffff;
+}
+
+.badge-card p {
+  margin: 0 0 8px;
+  color: #4f6357;
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.impact-table-wrap {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.impact-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.impact-table th,
+.impact-table td {
+  padding: 8px 7px;
+  border-bottom: 1px solid rgba(20, 96, 61, 0.1);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.impact-table th {
+  color: #4f6357;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.impact-table td {
+  color: #244434;
+  font-weight: 650;
+  font-size: 0.82rem;
+}
+
+.impact-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.impact-pagination button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #ecf5ee;
+  color: #14603d;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.impact-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.impact-pagination span {
+  color: #4f6357;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .impact-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .feed-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .feed-header-right {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .top-tabs {
+    order: -1;
+  }
+
+  .impact-content {
+    width: min(100% - 28px, 1180px);
+    padding-top: 20px;
+  }
+
+  .impact-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .impact-pagination {
+    justify-content: space-between;
+  }
+}
