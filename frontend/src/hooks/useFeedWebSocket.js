@@ -12,20 +12,32 @@ export function useFeedWebSocket() {
   const timerRef = useRef(null);
 
   useEffect(() => {
+    let active = true;
+
     function connect() {
+      if (!active) return;
       try {
         const ws = new WebSocket(WS_URL);
         wsRef.current = ws;
 
         ws.onopen = () => {
+          if (!active) { ws.close(); return; }
           setConnected(true);
           retryRef.current = 0;
-          // STOMP CONNECT frame
           ws.send("CONNECT\naccept-version:1.2\nheart-beat:10000,10000\n\n\0");
         };
 
         ws.onmessage = (event) => {
-          if (!event.data || event.data.startsWith("CONNECTED") || event.data.startsWith("RECEIPT")) return;
+          if (!event.data || !active) return;
+
+          if (event.data.startsWith("CONNECTED")) {
+            ws.send("SUBSCRIBE\nid:sub-feed\ndestination:/topic/feed\n\n\0");
+            ws.send("SUBSCRIBE\nid:sub-feed-updates\ndestination:/topic/feed.updates\n\n\0");
+            return;
+          }
+
+          if (event.data.startsWith("RECEIPT")) return;
+
           if (event.data.startsWith("MESSAGE")) {
             try {
               const body = event.data.split("\n\n").slice(1).join("\n\n").replace(/\0$/, "");
@@ -39,6 +51,7 @@ export function useFeedWebSocket() {
 
         ws.onclose = () => {
           setConnected(false);
+          if (!active) return;
           const delay = Math.min(RECONNECT_BASE_MS * 2 ** retryRef.current, RECONNECT_MAX_MS);
           retryRef.current += 1;
           timerRef.current = setTimeout(connect, delay);
@@ -46,13 +59,14 @@ export function useFeedWebSocket() {
 
         ws.onerror = () => ws.close();
       } catch {
-        // WebSocket not available (e.g. backend not running) — fail silently
+        // WebSocket not available — fail silently
       }
     }
 
     connect();
 
     return () => {
+      active = false;
       clearTimeout(timerRef.current);
       wsRef.current?.close();
     };

@@ -48,4 +48,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default List<User> findAllConsumers() {
         return findByRoleAndActiveTrue(UserRole.CONSUMER);
     }
+
+    @Query("SELECT u FROM User u WHERE u.role IN :roles")
+    List<User> findByRoles(@Param("roles") List<UserRole> roles);
 }
