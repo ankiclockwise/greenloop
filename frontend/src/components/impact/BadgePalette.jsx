@@ -6,7 +6,6 @@ export function BadgePalette({ badges }) {
       <div className="section-header">
         <div>
           <span className="eyebrow">{IMPACT_COPY.BADGES_EYEBROW}</span>
-          <h2>{IMPACT_COPY.BADGES_TITLE}</h2>
         </div>
       </div>
 

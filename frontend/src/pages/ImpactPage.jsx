@@ -39,6 +39,9 @@ export function ImpactPage() {
             <NavLink to={IMPACT_ROUTES.FEED} end className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
               {IMPACT_COPY.FEED_TAB}
             </NavLink>
+            <NavLink to="/dashboard" className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
+              My Dashboard
+            </NavLink>
             <NavLink to={IMPACT_ROUTES.IMPACT} className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
               {IMPACT_COPY.IMPACT_TAB}
             </NavLink>

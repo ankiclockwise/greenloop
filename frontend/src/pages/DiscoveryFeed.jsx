@@ -10,6 +10,7 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { useFeedWebSocket } from "../hooks/useFeedWebSocket";
 import { useAuth } from "../auth/AuthProvider";
 import { DEFAULT_MOCK_LISTINGS, createListingFromForm } from "../data/mockListings";
+import { normalizeDashboardListing, storeCreatedListing } from "../utils/listingDashboard";
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
@@ -221,7 +222,7 @@ export function DiscoveryFeed() {
   async function handleCreateListing(formValues) {
     setShowDonateModal(false);
     try {
-      await axios.post("/api/listings?ownerId=1", {
+      const response = await axios.post("/api/listings?ownerId=1", {
         title: formValues.name,
         description: formValues.description || formValues.name,
         category: CATEGORY_MAP[formValues.category] || formValues.category.toUpperCase(),
@@ -234,6 +235,10 @@ export function DiscoveryFeed() {
         pickupWindowEnd: formValues.pickupWindowEnd,
         expiresAt: formValues.pickupWindowEnd,
       });
+      storeCreatedListing(normalizeDashboardListing({
+        ...response.data,
+        ownerEmail: user?.email
+      }));
       fetchListings(lat, lng);
     } catch (err) {
       console.error("Failed to create listing:", err);
@@ -242,6 +247,7 @@ export function DiscoveryFeed() {
         user?.displayName || user?.email,
         user?.email
       );
+      storeCreatedListing(normalizeDashboardListing(localListing));
       setListings((current) => [localListing, ...current]);
     }
   }
@@ -270,6 +276,9 @@ export function DiscoveryFeed() {
           <nav className="top-tabs" aria-label="Main navigation">
             <NavLink to="/" end className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
               Feed
+            </NavLink>
+            <NavLink to="/dashboard" className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
+              My Dashboard
             </NavLink>
             <NavLink to="/impact" className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
               Impact
