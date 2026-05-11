@@ -35,13 +35,13 @@ public class LeaderboardItemDto {
         return dto;
     }
 
-    public static LeaderboardItemDto forStudent(int rank, String userId, String name,
+    public static LeaderboardItemDto forStudent(int rank, String userId, String userType, String name,
                                                 int foodReceived, int pickupCount,
                                                 int foodDonated, int donationCount, double co2SavedKg) {
         LeaderboardItemDto dto = new LeaderboardItemDto();
         dto.rank = rank;
         dto.userId = userId;
-        dto.userType = "retail_user";
+        dto.userType = userType;
         dto.name = name;
         dto.foodReceived = foodReceived;
         dto.pickupCount = pickupCount;
