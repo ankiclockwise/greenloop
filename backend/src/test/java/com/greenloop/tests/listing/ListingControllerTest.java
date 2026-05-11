@@ -8,25 +8,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Collections;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class ListingControllerTest {
 
     private MockMvc mockMvc;
-
-    private ListingService listingService;
-
-    private ObjectMapper objectMapper = new ObjectMapper();
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private Listing sample;
 
     @BeforeEach
@@ -35,8 +28,7 @@ public class ListingControllerTest {
         sample.setTitle("t");
         sample.setDescription("d");
 
-        // Create a small test double by subclassing ListingService and overriding methods used by controller
-        listingService = new ListingService(null, null, null) {
+        ListingService listingService = new ListingService(null, null, null, null) {
             @Override
             public java.util.List<Listing> getAvailableListings() {
                 return Collections.emptyList();
