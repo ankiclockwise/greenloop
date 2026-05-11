@@ -13,7 +13,7 @@ const CATEGORY_MAP = {
 
 export async function createFoodListing(formValues, user) {
   try {
-    const response = await axios.post("/api/listings?ownerId=1", {
+    const response = await axios.post(`/api/listings?ownerId=${user?.dbId || 1}`, {
       title: formValues.name,
       description: formValues.description || formValues.name,
       category: CATEGORY_MAP[formValues.category] || formValues.category.toUpperCase(),
