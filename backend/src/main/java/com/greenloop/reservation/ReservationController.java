@@ -21,6 +21,11 @@ public class ReservationController {
         return reservationService.createReservation(request.getListingId(), userId);
     }
 
+    @PatchMapping("/{id}/collect")
+    public Reservation collectReservation(@PathVariable Long id) {
+        return reservationService.collectReservation(id);
+    }
+
     private Long resolveUserId(Long userIdFromRequest) {
         if (userIdFromRequest != null) {
             return userIdFromRequest;

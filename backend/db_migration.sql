@@ -136,6 +136,34 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
     INDEX idx_evt_expires_at (expires_at)
 );
 
+-- User impact stats table
+CREATE TABLE IF NOT EXISTS user_impact (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL UNIQUE,
+    food_donated INT NOT NULL DEFAULT 0,
+    food_received INT NOT NULL DEFAULT 0,
+    donation_count INT NOT NULL DEFAULT 0,
+    pickup_count INT NOT NULL DEFAULT 0,
+    completed_pickups INT NOT NULL DEFAULT 0,
+    co2_saved_kg DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_ui_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Pre-computed impact stats per user';
+
+-- Earned badges table
+CREATE TABLE IF NOT EXISTS user_badges (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    badge_id VARCHAR(50) NOT NULL,
+    earned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_badge (user_id, badge_id),
+    INDEX idx_ub_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Badges earned by users';
+
 -- Reservations table
 CREATE TABLE IF NOT EXISTS reservations (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,

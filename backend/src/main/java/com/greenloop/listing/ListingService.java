@@ -1,6 +1,7 @@
 package com.greenloop.listing;
 
 import com.greenloop.auth.exception.UserNotFoundException;
+import com.greenloop.impact.ImpactService;
 import com.greenloop.model.Listing;
 import com.greenloop.model.ListingStatus;
 import com.greenloop.model.User;
@@ -17,13 +18,16 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
     private final ListingEventPublisher listingEventPublisher;
+    private final ImpactService impactService;
 
     public ListingService(ListingRepository listingRepository,
             UserRepository userRepository,
-            ListingEventPublisher listingEventPublisher) {
+            ListingEventPublisher listingEventPublisher,
+            ImpactService impactService) {
         this.listingRepository = listingRepository;
         this.userRepository = userRepository;
         this.listingEventPublisher = listingEventPublisher;
+        this.impactService = impactService;
     }
 
     public Listing createListing(Listing listing, Long ownerId) {
@@ -36,6 +40,7 @@ public class ListingService {
         listing.setStatus(ListingStatus.AVAILABLE);
 
         Listing savedListing = listingRepository.save(listing);
+        impactService.recordListingCreated(owner, savedListing);
         // listingEventPublisher.publishNewListing(savedListing);
         return savedListing;
     }
