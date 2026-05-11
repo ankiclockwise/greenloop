@@ -1,5 +1,7 @@
-import { Link, NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { DonateFoodModal } from "../components/feed/DonateFoodModal";
 import { BadgePalette } from "../components/impact/BadgePalette";
 import { ImpactMetrics } from "../components/impact/ImpactMetrics";
 import { LeaderboardTable } from "../components/impact/LeaderboardTable";
@@ -8,10 +10,13 @@ import {
   IMPACT_ROUTES
 } from "../constants/impactConstants";
 import { useImpactData } from "../hooks/useImpactData";
+import { createFoodListing } from "../utils/createFoodListing";
 import { formatUserType } from "../utils/impactUtils";
 
 export function ImpactPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [showDonateModal, setShowDonateModal] = useState(false);
   const {
     badges,
     dataNote,
@@ -24,6 +29,12 @@ export function ImpactPage() {
     studentPage,
     visibleMetrics
   } = useImpactData(user);
+
+  async function handleCreateListing(formValues) {
+    setShowDonateModal(false);
+    await createFoodListing(formValues, user);
+    navigate("/", { replace: true });
+  }
 
   return (
     <div className="impact-shell">
@@ -46,9 +57,13 @@ export function ImpactPage() {
               {IMPACT_COPY.IMPACT_TAB}
             </NavLink>
           </nav>
-          <Link className="feed-donate-button" to={IMPACT_ROUTES.FEED}>
+          <button
+            className="feed-donate-button"
+            type="button"
+            onClick={() => setShowDonateModal(true)}
+          >
             {IMPACT_COPY.DONATE_FOOD}
-          </Link>
+          </button>
           <button className="feed-logout-button" type="button" onClick={() => logout()}>
             {IMPACT_COPY.LOGOUT}
           </button>
@@ -95,6 +110,13 @@ export function ImpactPage() {
           </aside>
         </div>
       </main>
+
+      {showDonateModal ? (
+        <DonateFoodModal
+          onClose={() => setShowDonateModal(false)}
+          onSubmit={handleCreateListing}
+        />
+      ) : null}
     </div>
   );
 }
