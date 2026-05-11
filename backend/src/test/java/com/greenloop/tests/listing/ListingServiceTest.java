@@ -1,20 +1,21 @@
 package com.greenloop.tests.listing;
 
 import com.greenloop.auth.exception.UserNotFoundException;
+import com.greenloop.impact.ImpactService;
 import com.greenloop.listing.ListingRepository;
 import com.greenloop.listing.ListingService;
 import com.greenloop.listing.ListingUpdateRequest;
 import com.greenloop.model.Listing;
 import com.greenloop.model.ListingStatus;
 import com.greenloop.model.User;
-import com.greenloop.repository.UserRepository;
 import com.greenloop.realtime.ListingEventPublisher;
+import com.greenloop.repository.UserRepository;
+import com.greenloop.reservation.Reservation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -27,33 +28,26 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class ListingServiceTest {
 
-    @Mock
-    private ListingRepository listingRepository;
+    @Mock private ListingRepository listingRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @Captor private ArgumentCaptor<Listing> listingCaptor;
 
-    // Use a no-op publisher to avoid Mockito inline mock issues on newer JDKs
-    private ListingEventPublisher listingEventPublisher = new ListingEventPublisher(null) {
-        @Override
-        public void publishListingUpdate(Object listing) {}
-        @Override
-        public void publishNewListing(Object listing) {}
-        @Override
-        public void publishReservationConfirmation(Object reservation, Object user) {}
-        @Override
-        public void publishReservationCancellation(Object reservation, Object user, String reason) {}
-        @Override
-        public void publishNoShowNotification(Object reservation, Object user) {}
+    private ListingService listingService;
+    private User owner;
+
+    private final ListingEventPublisher noOpPublisher = new ListingEventPublisher(null) {
+        @Override public void publishNewListing(Listing listing) {}
+        @Override public void publishListingUpdate(Listing listing) {}
+        @Override public void publishReservationConfirmation(Reservation reservation, Object user) {}
+        @Override public void publishReservationCancellation(Reservation reservation, Object user, String reason) {}
+        @Override public void publishNoShowNotification(Reservation reservation, Object user) {}
     };
 
-    @InjectMocks
-    private ListingService listingService;
-
-    @Captor
-    private ArgumentCaptor<Listing> listingCaptor;
-
-    private User owner;
+    private final ImpactService noOpImpact = new ImpactService(null, null, null) {
+        @Override public void recordListingCreated(User owner, Listing listing) {}
+        @Override public void recordReservationCollected(Listing listing, User receiver) {}
+    };
 
     @BeforeEach
     void setup() {
@@ -61,8 +55,7 @@ public class ListingServiceTest {
         owner.setId(42L);
         owner.setEmail("owner@example.com");
         owner.setName("Owner");
-    // instantiate service with mocks and the no-op publisher
-    listingService = new ListingService(listingRepository, userRepository, listingEventPublisher);
+        listingService = new ListingService(listingRepository, userRepository, noOpPublisher, noOpImpact);
     }
 
     @Test
@@ -77,11 +70,7 @@ public class ListingServiceTest {
         listing.setExpiresAt(LocalDateTime.now().plusDays(1));
 
         when(userRepository.findById(42L)).thenReturn(Optional.of(owner));
-        when(listingRepository.save(any(Listing.class))).thenAnswer(i -> {
-            Listing l = i.getArgument(0);
-            l.setStatus(ListingStatus.AVAILABLE);
-            return l;
-        });
+        when(listingRepository.save(any(Listing.class))).thenAnswer(i -> i.getArgument(0));
 
         Listing saved = listingService.createListing(listing, 42L);
 
@@ -118,7 +107,7 @@ public class ListingServiceTest {
     }
 
     @Test
-    void updateListing_appliesChanges_andPublishesEvent() {
+    void updateListing_appliesChanges() {
         Listing existing = new Listing();
         existing.setTitle("old");
         existing.setQuantity(1);
@@ -133,10 +122,10 @@ public class ListingServiceTest {
         req.setTitle("new title");
         req.setQuantity(10);
 
-    Listing updated = listingService.updateListing(5L, req);
+        Listing updated = listingService.updateListing(5L, req);
 
-    assertEquals("new title", updated.getTitle());
-    assertEquals(10, updated.getQuantity());
+        assertEquals("new title", updated.getTitle());
+        assertEquals(10, updated.getQuantity());
     }
 
     @Test
