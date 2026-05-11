@@ -31,6 +31,15 @@ public class Reservation {
     @Column(name = "pickup_window_end")
     private LocalDateTime pickupWindowEnd;
 
+    @Column(name = "pickup_code", length = 50)
+    private String pickupCode;
+
+    @Column(name = "quantity_reserved", nullable = false)
+    private int quantityReserved = 1;
+
+    @Column(name = "collected_at")
+    private LocalDateTime collectedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -107,4 +116,13 @@ public class Reservation {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public String getPickupCode() { return pickupCode; }
+    public void setPickupCode(String pickupCode) { this.pickupCode = pickupCode; }
+
+    public int getQuantityReserved() { return quantityReserved; }
+    public void setQuantityReserved(int quantityReserved) { this.quantityReserved = quantityReserved; }
+
+    public LocalDateTime getCollectedAt() { return collectedAt; }
+    public void setCollectedAt(LocalDateTime collectedAt) { this.collectedAt = collectedAt; }
 }

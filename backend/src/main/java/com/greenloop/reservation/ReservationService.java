@@ -9,6 +9,8 @@ import com.greenloop.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 public class ReservationService {
 
@@ -39,6 +41,10 @@ public class ReservationService {
             throw new IllegalStateException("Listing is not available");
         }
 
+        if (listing.getOwner().getId().equals(userId)) {
+            throw new IllegalStateException("Cannot reserve your own listing");
+        }
+
         listing.setStatus(ListingStatus.RESERVED);
         listingRepository.save(listing);
 
@@ -46,6 +52,8 @@ public class ReservationService {
         reservation.setListing(listing);
         reservation.setUser(user);
         reservation.setPickupWindowEnd(listing.getPickupWindowEnd());
+        reservation.setQuantityReserved(1);
+        reservation.setPickupCode("GRN-" + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8).toUpperCase());
 
         return reservationRepository.save(reservation);
     }
@@ -60,6 +68,7 @@ public class ReservationService {
         }
 
         reservation.setStatus("COLLECTED");
+        reservation.setCollectedAt(java.time.LocalDateTime.now());
         reservationRepository.save(reservation);
 
         Listing listing = reservation.getListing();
