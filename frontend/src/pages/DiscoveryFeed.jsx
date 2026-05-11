@@ -3,14 +3,14 @@ import axios from "axios";
 import { NavLink } from "react-router-dom";
 import { FilterBar } from "../components/feed/FilterBar";
 import { ListingCard } from "../components/feed/ListingCard";
-import { ListingComposer } from "../components/feed/ListingComposer";
+import { DonateFoodModal } from "../components/feed/DonateFoodModal";
 import { ListingDetailView } from "../components/feed/ListingDetailView";
 import { ReservationConfirmation } from "../components/feed/ReservationConfirmation";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useFeedWebSocket } from "../hooks/useFeedWebSocket";
 import { useAuth } from "../auth/AuthProvider";
-import { DEFAULT_MOCK_LISTINGS, createListingFromForm } from "../data/mockListings";
-import { normalizeDashboardListing, storeCreatedListing } from "../utils/listingDashboard";
+import { DEFAULT_MOCK_LISTINGS } from "../data/mockListings";
+import { createFoodListing } from "../utils/createFoodListing";
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
@@ -237,45 +237,14 @@ export function DiscoveryFeed() {
     }
   }
 
-  const CATEGORY_MAP = {
-    "Produce": "PRODUCE",
-    "Bakery": "BAKERY",
-    "Prepared": "PREPARED",
-    "Dairy": "DAIRY",
-    "Dry Goods": "PANTRY",
-    "Beverages": "BEVERAGE",
-  };
-
   async function handleCreateListing(formValues) {
     setShowDonateModal(false);
-    try {
-      const response = await axios.post(`/api/listings?ownerId=${user?.dbId || 1}`, {
-        title: formValues.name,
-        description: formValues.description || formValues.name,
-        category: CATEGORY_MAP[formValues.category] || formValues.category.toUpperCase(),
-        quantity: parseInt(formValues.quantity, 10),
-        unit: "piece",
-        originalPrice: parseFloat(formValues.price) || 0,
-        discountedPrice: parseFloat(formValues.price) || 0,
-        pickupAddress: formValues.pickupLocation,
-        pickupWindowStart: formValues.pickupWindowStart,
-        pickupWindowEnd: formValues.pickupWindowEnd,
-        expiresAt: formValues.pickupWindowEnd,
-      });
-      storeCreatedListing(normalizeDashboardListing({
-        ...response.data,
-        ownerEmail: user?.email
-      }));
+    const { listing, source } = await createFoodListing(formValues, user);
+
+    if (source === "api") {
       fetchListings(lat, lng);
-    } catch (err) {
-      console.error("Failed to create listing:", err);
-      const localListing = createListingFromForm(
-        formValues,
-        user?.displayName || user?.email,
-        user?.email
-      );
-      storeCreatedListing(normalizeDashboardListing(localListing));
-      setListings((current) => [localListing, ...current]);
+    } else {
+      setListings((current) => [listing, ...current]);
     }
   }
 
@@ -513,24 +482,10 @@ export function DiscoveryFeed() {
       ) : null}
 
       {showDonateModal ? (
-        <div className="confirmation-overlay" role="dialog" aria-modal="true">
-          <div className="donate-modal-card">
-            <div className="section-header">
-              <div>
-                <span className="eyebrow">Donate Food</span>
-                <h2>Post a new listing</h2>
-              </div>
-              <button
-                type="button"
-                className="dismiss-button"
-                onClick={() => setShowDonateModal(false)}
-              >
-                Close
-              </button>
-            </div>
-            <ListingComposer onSubmit={handleCreateListing} />
-          </div>
-        </div>
+        <DonateFoodModal
+          onClose={() => setShowDonateModal(false)}
+          onSubmit={handleCreateListing}
+        />
       ) : null}
     </div>
   );
