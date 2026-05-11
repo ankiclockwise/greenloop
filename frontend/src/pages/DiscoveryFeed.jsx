@@ -28,6 +28,18 @@ export function DiscoveryFeed() {
   const [selectedListingId, setSelectedListingId] = useState(null);
   const [reservingId, setReservingId] = useState("");
   const [confirmationListing, setConfirmationListing] = useState(null);
+  const [myReservations, setMyReservations] = useState([]);
+
+  const fetchMyReservations = useCallback(async () => {
+    const userId = user?.dbId;
+    if (!userId) return;
+    try {
+      const res = await axios.get(`/api/reservations/user/${userId}`);
+      setMyReservations(res.data || []);
+    } catch {
+      // silent — panel stays empty if backend unavailable
+    }
+  }, [user?.dbId]);
 
   const [filters, setFilters] = useState({
     category: "",
@@ -107,6 +119,10 @@ export function DiscoveryFeed() {
   }, [newListings]);
 
   useEffect(() => {
+    fetchMyReservations();
+  }, [fetchMyReservations]);
+
+  useEffect(() => {
     if (geoError && !lat) setShowLocationBar(true);
   }, [geoError, lat]);
 
@@ -158,12 +174,19 @@ export function DiscoveryFeed() {
   });
 
   const selectedListing =
-    listings.find((listing) => listing.id === selectedListingId) || null;
+    listings.find((listing) => listing.id === selectedListingId) ||
+    myReservations.find((r) => r.listing?.id === selectedListingId)?.listing ||
+    null;
 
   const autodonations = filteredListings.filter((listing) => listing.price === 0);
-  const reservedListings = listings.filter(
-    (listing) => listing.reservationStatus && listing.reservationStatus !== "available"
-  );
+  const reservedListings = myReservations
+    .filter((r) => r.status === "RESERVED")
+    .map((r) => ({
+      ...r.listing,
+      reservationStatus: "confirmed",
+      reservationCode: `GL-${r.id}`,
+      reservationId: r.id,
+    }));
 
   const showSampleFeed = !geoLoading && (!lat || !lng);
 
@@ -174,8 +197,11 @@ export function DiscoveryFeed() {
 
     setReservingId(listingId);
 
+    let reservationId = null;
     try {
-      await axios.post("/api/reservations", { listingId });
+      const res = await axios.post("/api/reservations", { listingId, userId: user?.dbId });
+      reservationId = res.data?.id || null;
+      fetchMyReservations();
     } catch {
       // Local-first UI while reservation APIs are still stabilizing.
     } finally {
@@ -190,7 +216,8 @@ export function DiscoveryFeed() {
           nextListing = {
             ...listing,
             reservationStatus: "confirmed",
-            reservationCode: listing.reservationCode || `GL-${listing.id}`
+            reservationCode: `GL-${reservationId || listing.id}`,
+            reservationId
           };
 
           return nextListing;
@@ -222,7 +249,7 @@ export function DiscoveryFeed() {
   async function handleCreateListing(formValues) {
     setShowDonateModal(false);
     try {
-      const response = await axios.post("/api/listings?ownerId=1", {
+      const response = await axios.post(`/api/listings?ownerId=${user?.dbId || 1}`, {
         title: formValues.name,
         description: formValues.description || formValues.name,
         category: CATEGORY_MAP[formValues.category] || formValues.category.toUpperCase(),
@@ -252,9 +279,15 @@ export function DiscoveryFeed() {
     }
   }
 
+  async function handleCollect(reservationId) {
+    await axios.patch(`/api/reservations/${reservationId}/collect`);
+    fetchMyReservations();
+    fetchListings(lat, lng);
+  }
+
   function handleOpenListing(listing) {
     setSelectedListingId(listing.id);
-    setConfirmationListing(null);
+    setConfirmationListing(listing.reservationStatus === "confirmed" ? listing : null);
   }
 
   function handleCloseListingModal() {
@@ -466,6 +499,7 @@ export function DiscoveryFeed() {
             <ReservationConfirmation
               listing={confirmationListing}
               onClose={handleCloseListingModal}
+              onCollect={handleCollect}
             />
           ) : (
             <ListingDetailView

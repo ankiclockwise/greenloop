@@ -41,7 +41,7 @@ public class ListingService {
 
         Listing savedListing = listingRepository.save(listing);
         impactService.recordListingCreated(owner, savedListing);
-        // listingEventPublisher.publishNewListing(savedListing);
+        listingEventPublisher.publishNewListing(savedListing);
         return savedListing;
     }
 

@@ -42,7 +42,7 @@ public class ImpactService {
         List<BadgeDto> earnedBadges = badgeService.evaluateAndPersist(user, stats, userType, rank)
                 .stream().filter(BadgeDto::isEarned).collect(Collectors.toList());
 
-        return buildMeResponse(userType, stats, rank, earnedBadges);
+        return buildMeResponse(user.getId(), userType, stats, rank, earnedBadges);
     }
 
     @Transactional
@@ -127,10 +127,11 @@ public class ImpactService {
         return sorted.size() + 1;
     }
 
-    private ImpactMeResponse buildMeResponse(String userType, UserImpact stats,
+    private ImpactMeResponse buildMeResponse(Long userId, String userType, UserImpact stats,
                                               int rank, List<BadgeDto> earnedBadges) {
         boolean isStudent = "retail_user".equals(userType);
         return new ImpactMeResponse(
+                userId,
                 userType,
                 isStudent ? stats.getFoodReceived() : null,
                 stats.getFoodDonated(),

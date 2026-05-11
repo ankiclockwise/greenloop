@@ -1,5 +1,6 @@
 package com.greenloop.reservation;
 
+import com.greenloop.carbon.Co2Calculator;
 import com.greenloop.impact.ImpactService;
 import com.greenloop.model.Listing;
 import com.greenloop.model.ListingStatus;
@@ -73,6 +74,10 @@ public class ReservationService {
 
         Listing listing = reservation.getListing();
         listing.setStatus(ListingStatus.COLLECTED);
+
+        // Compute and persist CO2 savings so ImpactService can read listing.getCo2SavedKg()
+        double co2 = Co2Calculator.computeKg(listing.getCategory(), listing.getQuantity() != null ? listing.getQuantity() : 0, listing.getUnit());
+        listing.setCo2SavedKg(java.math.BigDecimal.valueOf(co2));
         listingRepository.save(listing);
 
         impactService.recordReservationCollected(listing, reservation.getUser());

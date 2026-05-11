@@ -5,20 +5,30 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/reservations")
 public class ReservationController {
 
     private final ReservationService reservationService;
+    private final ReservationRepository reservationRepository;
 
-    public ReservationController(ReservationService reservationService) {
+    public ReservationController(ReservationService reservationService,
+                                 ReservationRepository reservationRepository) {
         this.reservationService = reservationService;
+        this.reservationRepository = reservationRepository;
     }
 
     @PostMapping
     public Reservation createReservation(@RequestBody CreateReservationRequest request) {
         Long userId = resolveUserId(request.getUserId());
         return reservationService.createReservation(request.getListingId(), userId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Reservation> getReservationsByUser(@PathVariable Long userId) {
+        return reservationRepository.findByUserId(userId);
     }
 
     @PatchMapping("/{id}/collect")

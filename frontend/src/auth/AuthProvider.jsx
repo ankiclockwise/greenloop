@@ -4,6 +4,7 @@ import {
   useEffect,
   useState
 } from "react";
+import axios from "axios";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -56,8 +57,24 @@ function normalizeUser(nextUser) {
     displayName: nextUser.displayName,
     emailVerified: nextUser.emailVerified,
     photoURL: nextUser.photoURL || "",
-    actor: getStoredActor(nextUser.email)
+    actor: getStoredActor(nextUser.email),
+    dbId: null
   };
+}
+
+async function syncUserWithBackend(firebaseUser) {
+  try {
+    const res = await axios.get("/api/impact/me", {
+      params: {
+        email: firebaseUser.email,
+        name: firebaseUser.displayName || firebaseUser.email.split("@")[0],
+        userType: "retail_user"
+      }
+    });
+    return res.data.userId || null;
+  } catch {
+    return null;
+  }
 }
 
 function createMockUser({ email = "mock@example.com", fullName = "Mock User" } = {}) {
@@ -83,9 +100,17 @@ export function AuthProvider({ children }) {
       return undefined;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(normalizeUser(nextUser));
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+      if (nextUser) {
+        const normalized = normalizeUser(nextUser);
+        setUser(normalized);
+        setLoading(false);
+        const dbId = await syncUserWithBackend(nextUser);
+        if (dbId) setUser((u) => u ? { ...u, dbId } : u);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
 
     return unsubscribe;

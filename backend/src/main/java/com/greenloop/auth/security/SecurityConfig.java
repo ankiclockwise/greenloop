@@ -56,13 +56,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/listings/**").permitAll()
                 .requestMatchers("/api/reservations/**").permitAll()
+                .requestMatchers("/api/reservations/user/**").permitAll()
                 .requestMatchers("/api/impact/**").permitAll()
                 .requestMatchers("/api/analytics/**").permitAll()
+                .requestMatchers("/api/v1/reservations/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/login/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/feed/**").hasAnyRole("CONSUMER", "RETAILER", "DINING_HALL", "DONOR")
                 .requestMatchers(HttpMethod.GET, "/api/products/**").hasAnyRole("CONSUMER", "RETAILER", "DINING_HALL", "DONOR")
@@ -89,9 +92,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            frontendUrl, productionUrl,
-            "http://localhost:3000", "http://localhost:5173"
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*", frontendUrl, productionUrl
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowCredentials(true);

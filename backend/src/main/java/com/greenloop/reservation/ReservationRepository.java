@@ -30,4 +30,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r JOIN FETCH r.user JOIN FETCH r.listing WHERE r.listing.id IN :listingIds")
     List<Reservation> findByListingIdsWithUser(@Param("listingIds") List<Long> listingIds);
+
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.listing WHERE r.user.id = :userId")
+    List<Reservation> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT r FROM Reservation r WHERE r.listing.owner.id = :ownerId AND r.status = 'COLLECTED'")
+    List<Reservation> findCollectedByOwnerId(@Param("ownerId") Long ownerId);
 }
