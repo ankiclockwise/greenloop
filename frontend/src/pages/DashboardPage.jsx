@@ -70,7 +70,7 @@ export function DashboardPage() {
     try {
       setLoading(true);
       setDataNote("");
-      const response = await axios.get(`/api/listings/owner/${dashboardOwnerId}`);
+      const response = await axios.get(`/api/analytics/dashboard/listings/${dashboardOwnerId}`);
       const apiListings = (response.data || []).map(normalizeDashboardListing);
       setListings([...localListings, ...apiListings]);
     } catch (error) {

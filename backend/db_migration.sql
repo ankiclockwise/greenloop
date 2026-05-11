@@ -170,6 +170,9 @@ CREATE TABLE IF NOT EXISTS reservations (
     listing_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'RESERVED',
+    pickup_code VARCHAR(50) NULL,
+    quantity_reserved INT NOT NULL DEFAULT 1,
+    collected_at TIMESTAMP NULL,
     pickup_window_end TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -181,6 +184,10 @@ CREATE TABLE IF NOT EXISTS reservations (
     INDEX idx_res_pickup_window_end (pickup_window_end)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Reservations for food listings';
+
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS pickup_code VARCHAR(50) NULL;
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS quantity_reserved INT NOT NULL DEFAULT 1;
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS collected_at TIMESTAMP NULL;
 
 -- Create initial data (optional)
 -- INSERT INTO users (email, name, role, university_verified, is_active)
