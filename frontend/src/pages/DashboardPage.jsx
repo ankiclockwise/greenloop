@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { DonateFoodModal } from "../components/feed/DonateFoodModal";
 import {
   DASHBOARD_SAMPLE_LISTINGS,
   getDashboardMetrics,
   getLocalCreatedListings,
   normalizeDashboardListing
 } from "../utils/listingDashboard";
+import { createFoodListing } from "../utils/createFoodListing";
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 const dashboardOwnerId = import.meta.env.VITE_DEMO_OWNER_ID || "1";
@@ -53,10 +55,12 @@ function formatDateTime(value) {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dataNote, setDataNote] = useState("");
   const [selectedListingId, setSelectedListingId] = useState(null);
+  const [showDonateModal, setShowDonateModal] = useState(false);
 
   const loadDashboardListings = useCallback(async () => {
     const localListings = getLocalCreatedListings(user?.email);
@@ -86,6 +90,12 @@ export function DashboardPage() {
     loadDashboardListings();
   }, [loadDashboardListings]);
 
+  async function handleCreateListing(formValues) {
+    setShowDonateModal(false);
+    await createFoodListing(formValues, user);
+    navigate("/", { replace: true });
+  }
+
   const metrics = useMemo(() => getDashboardMetrics(listings), [listings]);
   const selectedListing = metrics.listings.find(
     (listing) => listing.id === selectedListingId
@@ -112,9 +122,13 @@ export function DashboardPage() {
               Impact
             </NavLink>
           </nav>
-          <Link className="feed-donate-button" to="/">
+          <button
+            className="feed-donate-button"
+            type="button"
+            onClick={() => setShowDonateModal(true)}
+          >
             Donate Food
-          </Link>
+          </button>
           <button className="feed-logout-button" type="button" onClick={() => logout()}>
             Logout
           </button>
@@ -256,6 +270,13 @@ export function DashboardPage() {
             </div>
           </section>
         </div>
+      ) : null}
+
+      {showDonateModal ? (
+        <DonateFoodModal
+          onClose={() => setShowDonateModal(false)}
+          onSubmit={handleCreateListing}
+        />
       ) : null}
     </div>
   );
