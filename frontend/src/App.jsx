@@ -5,6 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ActorOnboardingPage } from "./pages/ActorOnboardingPage";
 import { DiscoveryFeed } from "./pages/DiscoveryFeed";
+import { DashboardPage } from "./pages/DashboardPage";
 import { ImpactPage } from "./pages/ImpactPage";
 
 export default function App() {
@@ -47,6 +48,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ActorOnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
           </ProtectedRoute>
         }
       />

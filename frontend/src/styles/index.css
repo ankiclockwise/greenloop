@@ -6,4 +6,5 @@
 @import "./base.css";   /* global resets, :root, body, links         */
 @import "./auth.css";   /* login, signup, dashboard, route guards     */
 @import "./feed.css";   /* discovery feed, filter bar, listing cards  */
+@import "./dashboard.css"; /* my dashboard listings and status summary */
 @import "./impact.css"; /* impact dashboard and leaderboards           */
