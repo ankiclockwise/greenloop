@@ -5,6 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ActorOnboardingPage } from "./pages/ActorOnboardingPage";
 import { DiscoveryFeed } from "./pages/DiscoveryFeed";
+import { ImpactPage } from "./pages/ImpactPage";
 
 export default function App() {
   return (
@@ -46,6 +47,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ActorOnboardingPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/impact"
+        element={
+          <ProtectedRoute>
+            <ImpactPage />
           </ProtectedRoute>
         }
       />

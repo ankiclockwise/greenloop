@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { NavLink } from "react-router-dom";
 import { FilterBar } from "../components/feed/FilterBar";
 import { ListingCard } from "../components/feed/ListingCard";
 import { ListingComposer } from "../components/feed/ListingComposer";
@@ -8,6 +9,9 @@ import { ReservationConfirmation } from "../components/feed/ReservationConfirmat
 import { useGeolocation } from "../hooks/useGeolocation";
 import { useFeedWebSocket } from "../hooks/useFeedWebSocket";
 import { useAuth } from "../auth/AuthProvider";
+import { DEFAULT_MOCK_LISTINGS, createListingFromForm } from "../data/mockListings";
+
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 
 export function DiscoveryFeed() {
   const { user, logout } = useAuth();
@@ -34,6 +38,12 @@ export function DiscoveryFeed() {
   });
 
   const fetchListings = useCallback(async (latitude, longitude) => {
+    if (useMockData) {
+      setListings(DEFAULT_MOCK_LISTINGS);
+      setError(null);
+      return;
+    }
+
     // Use default coordinates if location not available
     const lat = latitude || 42.3732; // Default to Amherst, MA
     const lng = longitude || -72.5199;
@@ -73,8 +83,8 @@ export function DiscoveryFeed() {
       setListings(data);
     } catch (error) {
       console.error("API call failed:", error);
-      setError("Could not load listings.");
-      setListings([]);
+      setError("Using sample listings because the backend is not available.");
+      setListings(DEFAULT_MOCK_LISTINGS);
     } finally {
       setLoading(false);
     }
@@ -227,6 +237,12 @@ export function DiscoveryFeed() {
       fetchListings(lat, lng);
     } catch (err) {
       console.error("Failed to create listing:", err);
+      const localListing = createListingFromForm(
+        formValues,
+        user?.displayName || user?.email,
+        user?.email
+      );
+      setListings((current) => [localListing, ...current]);
     }
   }
 
@@ -251,6 +267,14 @@ export function DiscoveryFeed() {
           </p>
         </div>
         <div className="feed-header-right">
+          <nav className="top-tabs" aria-label="Main navigation">
+            <NavLink to="/" end className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
+              Feed
+            </NavLink>
+            <NavLink to="/impact" className={({ isActive }) => `top-tab${isActive ? " active" : ""}`}>
+              Impact
+            </NavLink>
+          </nav>
           {wsConnected && (
             <span className="feed-live-dot">Live updates on</span>
           )}
