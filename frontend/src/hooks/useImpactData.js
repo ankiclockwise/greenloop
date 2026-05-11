@@ -37,9 +37,14 @@ export function useImpactData(user) {
 
     async function loadImpact() {
       try {
+        const params = user?.email ? {
+          email: user.email,
+          name: user.displayName || user.email,
+          userType: user.actor || "retail_user"
+        } : {};
         const [impactResponse, badgesResponse] = await Promise.all([
-          axios.get(IMPACT_API_ENDPOINTS.ME),
-          axios.get(IMPACT_API_ENDPOINTS.BADGES)
+          axios.get(IMPACT_API_ENDPOINTS.ME, { params }),
+          axios.get(IMPACT_API_ENDPOINTS.BADGES, { params })
         ]);
 
         if (cancelled) return;
